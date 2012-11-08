@@ -1,0 +1,17 @@
+name:           bogre-banana
+version:        0.1
+cabal-version:  >= 1.2
+build-type:     Simple
+author:         david
+
+library
+  hs-source-dirs:  src
+  build-depends:   base >= 4
+  ghc-options:     -Wall
+
+executable bogre-banana
+  hs-source-dirs:  src
+  main-is:         Main.hs
+  build-depends:   base >= 4
+  ghc-options:     -Wall
+
