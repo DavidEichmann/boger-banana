@@ -3,15 +3,25 @@ version:        0.1
 cabal-version:  >= 1.2
 build-type:     Simple
 author:         david
+copyright:      David Michael Taro Eichmann
 
 library
   hs-source-dirs:  src
-  build-depends:   base >= 4
+  build-depends:   
+                   base >= 4,
+                   reactive-banana >= 0.7.1.0,
+                   hois,
+                   monad-control,
+                   hogre
   ghc-options:     -Wall
 
 executable bogre-banana
   hs-source-dirs:  src
   main-is:         Main.hs
-  build-depends:   base >= 4
+  build-depends:   
+                   base >= 4,
+                   X11,
+                   hois,
+                   hogre
   ghc-options:     -Wall
 

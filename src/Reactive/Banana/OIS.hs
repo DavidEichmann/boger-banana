@@ -83,7 +83,8 @@ continuePolling is keysAlreadyDown pollDelay = do
         let keyPressed =  keysDown \\ keysAlreadyDown  -- TODO is this correct in terms of FRP theory???????????
         when (keyPressed /= []) $ fireKeyboadEvent is keyPressed
         
-        -- TODO: poll mouse
+        -- poll mouse
+        
         
         -- sleep thread
         threadDelay pollDelay
@@ -103,6 +104,10 @@ capture ((kb,_), (ms,_)) = do
 -- Check if a key is down. Note that you should call capture before using isKeyDown
 isKeyDown :: InputSystem -> KeyCode -> IO (Bool)
 isKeyDown ((kb,_), _) = keyboard_isKeyDown kb
+
+-- Check if a mouse button down. Note that you should call capture before using isKeyDown
+isMouseButtonDown :: InputSystem -> KeyCode -> IO (Bool)
+isMouseButtonDown ((kb,_), _) = keyboard_isKeyDown kb
 
 --
 -- some accessor functions

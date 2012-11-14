@@ -20,9 +20,9 @@ hogre02 = do
     -- set ambient light
     colourValue_with 1 1 1 1 $ sceneManager_setAmbientLight smgr
 
-    (robotEntity, robotNode) <- addEntity smgr "robot.mesh"
+    (robotEntity, robotNode) <- addEntity smgr "ogrehead.mesh"
     let (initx, initz) = initPos
-    node_translate_NodePfloatfloatfloatNodeTransformSpace (toNode robotNode) initx 0 initz TS_WORLD
+    --node_translate_NodePfloatfloatfloatNodeTransformSpace (toNode robotNode) initx 0 initz TS_WORLD
 
     anim <- entity_getAnimationState robotEntity "Walk"
     animationState_setLoop anim True

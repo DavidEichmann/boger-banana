@@ -7,4 +7,4 @@ import BB.Examples.Hogre02
 main::IO()
 main = 
         --keyInputExample
-        hogre02
+        hogre01
