@@ -10,21 +10,10 @@ import Reactive.Banana.Frameworks (
                 Frameworks,
                 AddHandler,
                 fromAddHandler,
-                newAddHandler,
-                changes,
-                reactimate
+                newAddHandler
         )
 
-import Foreign.C.Types (CInt(..))
-import Unsafe.Coerce
-import Data.List ((\\))
-import Control.Monad (
-                filterM,
-                when
-        )
 import Control.Concurrent (
-                ThreadId,
-                threadDelay,
                 forkIO
         )
 
@@ -166,15 +155,15 @@ reactimateWorld worldE = reactimate $ renderWorld <$> worldE -}
 
 
 render :: RenderWindow -> Root -> a -> (Root -> Float -> a -> IO (a, Bool)) -> IO a
-render window root value fun = do
+render win root value fun = do
     timer <- root_getTimer root
     time <- timer_getMicroseconds timer
-    render' time window root value fun
+    render' time win root value fun
 
 render' :: Int -> RenderWindow -> Root -> a -> (Root -> Float -> a -> IO (a, Bool)) -> IO a
-render' time window root value fun = 
+render' time win root value fun = 
   do windowEventUtilities_messagePump
-     closed <- renderWindow_isClosed window
+     closed <- renderWindow_isClosed win
      if closed
        then return value
        else do
@@ -184,7 +173,7 @@ render' time window root value fun =
          let delta = (fromIntegral (time' - time)) / 1000000
          (value', cont) <- fun root delta value
          if success && cont
-           then render' time' window root value' fun
+           then render' time' win root value' fun
            else return value'
 
 

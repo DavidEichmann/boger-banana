@@ -31,7 +31,7 @@ hogre01 = do
         light_setPosition_LightPfloatfloatfloat l 20 80 50
         
         
-        eventNet <- compile $ network ds [headNode1, headNode2]
+        eventNet <- compile $ network ds (headNode1, headNode2)
         actuate eventNet
         
         -- A proper mechanism of handeling child threads is needed (withh respect to ending the main thread) 
@@ -43,8 +43,8 @@ hogre01 = do
         
 
 
-network :: Frameworks t => DisplaySystem -> [SceneNode] -> Moment t ()
-network ds (node1:node2:_) = do
+network :: Frameworks t => DisplaySystem -> (SceneNode,SceneNode) -> Moment t ()
+network ds (node1,node2) = do
         -- input
         frameE <- getFrameEvent ds
 
@@ -63,8 +63,6 @@ network ds (node1:node2:_) = do
         --reactimate $ (putStrLn . show) <$> absTime  
         reactimate $ (setPosition node1) <$> pos1  
         reactimate $ (setPosition node2) <$> pos2
-        
-        
         
         
         
