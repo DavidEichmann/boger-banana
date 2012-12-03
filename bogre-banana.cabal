@@ -4,6 +4,7 @@ cabal-version:  >= 1.2
 build-type:     Simple
 author:         david
 copyright:      David Michael Taro Eichmann
+build-type:          Simple
 
 library
   hs-source-dirs:  src
@@ -14,6 +15,7 @@ library
                    monad-control,
                    hogre
   ghc-options:     -Wall
+  extra-libraries: stdc++
 
 executable bogre-banana
   hs-source-dirs:  src
@@ -24,4 +26,5 @@ executable bogre-banana
                    hois,
                    hogre
   ghc-options:     -Wall
+  --extra-libraries: stdc++
 

@@ -7,6 +7,7 @@ import Graphics.Ogre.HOgre
 import Graphics.Ogre.Types
 
 import Reactive.Banana.Frameworks
+import Reactive.Banana.Combinators
 import Reactive.Banana.HOGRE
 
 import BB.Util.Vec
@@ -21,8 +22,11 @@ hogre01 = do
         cam <- sceneManager_getCamera smgr "PlayerCam"
         camera_setPosition_CameraPfloatfloatfloat cam 0 0 200
         camera_lookAt cam 0 0 (-300)
+        
+        --load oger heads
         (_, headNode1) <- addEntity ds "ogrehead.mesh"
         (_, headNode2) <- addEntity ds "ogrehead.mesh"
+        
         -- set ambient light
         colourValue_with 0.5 0.5 0.5 1.0 (sceneManager_setAmbientLight smgr)
 
@@ -49,18 +53,21 @@ network ds (node1,node2) = do
         frameE <- getFrameEvent ds
 
         -- network
-        -- time 
-        let absTime = accumE 0 ((+) <$> frameE)
+        
+        -- time
+        -- at each frame
+        let absTimeFrameEvents = accumE 0 ((+) <$> frameE)
+        
+        let now  = absTimeFrameEvents
+        let past = apply (pure (\t -> t-2)) absTimeFrameEvents
+        
         -- position of node as a function of time
-        let posFn1 = (\t -> scale 40 (sin t, cos t, 0)) <$> (*1)
-        let posFn2 = posFn1 <$> (\t -> t-2)
+        let posBehavior  = pure  (\t -> scale 40 (sin t, 0, cos t))
         
-        let pos1 = posFn1 <$> absTime
-        let pos2 = posFn2 <$> absTime
+        let pos1 = apply posBehavior now
+        let pos2 = apply posBehavior past
         
-        return ()
         -- output
-        --reactimate $ (putStrLn . show) <$> absTime  
         reactimate $ (setPosition node1) <$> pos1  
         reactimate $ (setPosition node2) <$> pos2
         
