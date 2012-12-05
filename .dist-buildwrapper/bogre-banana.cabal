@@ -16,10 +16,7 @@ library
                    hogre
   ghc-options:     -Wall
   extensions: 	   ForeignFunctionInterface
-  --extra-lib-dirs: ./lib
   extra-libraries: stdc++
-  --workarounds
-
   C-sources: 	   ./src/Workarounds/cbits/Workarounds.cpp
   include-dirs:	   ./src/Workarounds/cpp/
 
@@ -33,8 +30,6 @@ executable bogre-banana
                    hogre
   ghc-options:     -Wall
   extensions: 	   ForeignFunctionInterface
-  --extra-libraries: workarounds
-
   C-sources: 	   ./src/Workarounds/cbits/Workarounds.cpp
   include-dirs:	   ./src/Workarounds/cpp/
 
