@@ -1,4 +1,4 @@
-module BB.Examples.Hogre01
+module BB.Examples.HogreHois01
 where
 
 import Reactive.Banana
@@ -9,13 +9,15 @@ import Graphics.Ogre.Types
 import Reactive.Banana.Frameworks
 import Reactive.Banana.Combinators
 import Reactive.Banana.OGRE
+import Reactive.Banana.OIS
+import BB.Workarounds
 
 import BB.Util.Vec
 
 -- based on basic tutorial 6 from Ogre Wiki.
 -- http://www.ogre3d.org/tikiwiki/Basic+Tutorial+6&structure=Tutorials
-hogre01 :: IO ()
-hogre01 = do
+hogreHois01 :: IO ()
+hogreHois01 = do
         ds <- createDisplaySystem
         
         let smgr = sceneManager ds
@@ -34,8 +36,11 @@ hogre01 = do
         l <- sceneManager_createLight_SceneManagerPcharP smgr "MainLight"
         light_setPosition_LightPfloatfloatfloat l 20 80 50
         
+        -- create input system
+        handle <- getWindowHandler (window ds)
+        is <- createInputSystem handle
         
-        eventNet <- compile $ network ds (headNode1, headNode2)
+        eventNet <- compile $ network ds is (headNode1, headNode2)
         actuate eventNet
         
         -- A proper mechanism of handeling child threads is needed (withh respect to ending the main thread) 
@@ -47,9 +52,10 @@ hogre01 = do
         
 
 
-network :: Frameworks t => DisplaySystem -> (SceneNode,SceneNode) -> Moment t ()
-network ds (node1,node2) = do
+network :: Frameworks t => DisplaySystem -> InputSystem -> (SceneNode,SceneNode) -> Moment t ()
+network ds is (node1,node2) = do
         -- input
+        keyE <- getKeyE is
         frameE <- getFrameEvent ds
 
         -- network
@@ -70,6 +76,12 @@ network ds (node1,node2) = do
         -- output
         reactimate $ (setPosition node1) <$> pos1  
         reactimate $ (setPosition node2) <$> pos2
+        reactimate $ printKey <$> keyE
+        
+        
+printKey :: Show a => a -> IO ()
+printKey pressedKeys = do
+        putStrLn $ "Pressed keys: " ++ (show pressedKeys)
         
         
         
