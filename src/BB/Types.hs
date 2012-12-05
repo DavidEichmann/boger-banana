@@ -5,8 +5,11 @@ import Foreign
 import Foreign.C.String
 import Foreign.C.Types
 
+import Graphics.Ogre.Types
+import OIS.Types
+
 type CBool = CChar -- correct?
 
-newtype OIS__Mouse = OIS__Mouse (Ptr OIS__Mouse) -- nullary data type
-newtype Ogre__RenderWindow = Ogre__RenderWindow (Ptr Ogre__RenderWindow) -- nullary data type
+type OIS__Mouse = Mouse-- nullary data type
+type Ogre__RenderWindow = RenderWindow -- nullary data type
 

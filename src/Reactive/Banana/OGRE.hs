@@ -1,7 +1,7 @@
 --
 -- Insert Documentation here :-)
 --
-module Reactive.Banana.HOGRE  where
+module Reactive.Banana.OGRE where
 
 
 
