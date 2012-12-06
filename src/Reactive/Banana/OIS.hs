@@ -7,6 +7,7 @@ module Reactive.Banana.OIS (
         getKeyE,
         getMouseE,
         startPolling,
+        capture,
         KeyCode(..)
 ) where
 
@@ -71,25 +72,28 @@ getMouseE :: Frameworks t => InputSystem -> Moment t (Event t MouseState)
 getMouseE = fromAddHandler . getMouseAddHandler
 
 startPolling :: InputSystem -> Int -> IO (ThreadId)
-startPolling is delay = forkIO $ continuePolling is [] delay
-
-continuePolling :: InputSystem -> KeysPressed -> Int -> IO ()
-continuePolling is keysAlreadyDown pollDelay = do
+startPolling is pollDelay = do
         -- capture input devices
         capture is
-        -- poll keyboard
-        -- at the moment only poll a few keys
-        keysDown <- filterM (isKeyDown is) allKeyCodes
-        let keyPressed =  keysDown \\ keysAlreadyDown  -- TODO is this correct in terms of FRP theory???????????
-        when (keyPressed /= []) $ fireKeyboadEvent is keyPressed
-        
-        -- poll mouse
-        
-        
         -- sleep thread
         threadDelay pollDelay
         -- loop
-        continuePolling is keysDown pollDelay
+        startPolling is pollDelay
+        
+poll :: InputSystem -> IO ()
+poll is = do
+        -- poll keyboard
+        -- at the moment only poll a few keys
+        keysDown <- getKeysDown is
+        let keyPressed =  keysDown
+        fireKeyboadEvent is keyPressed
+        
+        -- poll mouse
+        -- TODO
+        
+
+getKeysDown :: InputSystem -> IO (KeysPressed)
+getKeysDown is = filterM (isKeyDown is) allKeyCodes
 
 --
 -- some direct polling functions

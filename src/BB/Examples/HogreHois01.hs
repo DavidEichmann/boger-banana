@@ -2,17 +2,22 @@ module BB.Examples.HogreHois01
 where
 
 import Reactive.Banana
+import Reactive.Banana.Frameworks
 
 import Graphics.Ogre.HOgre
 import Graphics.Ogre.Types
+import OIS.Types
 
-import Reactive.Banana.Frameworks
 import Reactive.Banana.Combinators
+
 import Reactive.Banana.OGRE
 import Reactive.Banana.OIS
-import BB.Workarounds
+import Reactive.Banana.BOGRE
 
+import BB.Workarounds
 import BB.Util.Vec
+
+import Control.Concurrent (threadDelay)
 
 -- based on basic tutorial 6 from Ogre Wiki.
 -- http://www.ogre3d.org/tikiwiki/Basic+Tutorial+6&structure=Tutorials
@@ -43,14 +48,13 @@ hogreHois01 = do
         eventNet <- compile $ network ds is (headNode1, headNode2)
         actuate eventNet
         
+        
         -- A proper mechanism of handeling child threads is needed (withh respect to ending the main thread) 
         
-        --startRendering ds     -- this will not blockk the main thread, hence main will exit right away
-        startRenderingSync ds   -- this will block the main thread untill the window is closed
+        --startRendering ds (capture is)    -- this will not blockk the main thread, hence main will exit right away
+        startBogreSync (ds, is)   -- this will block the main thread untill the window is closed
         
         closeDisplaySystem ds
-        
-
 
 network :: Frameworks t => DisplaySystem -> InputSystem -> (SceneNode,SceneNode) -> Moment t ()
 network ds is (node1,node2) = do
@@ -77,6 +81,10 @@ network ds is (node1,node2) = do
         reactimate $ (setPosition node1) <$> pos1  
         reactimate $ (setPosition node2) <$> pos2
         reactimate $ printKey <$> keyE
+        
+        -- stop on escape key
+        --reactimate $ (closeDisplaySystem ds) <$ (keyE) --filterE (elem KC_ESCAPE) 
+        --reactimate $ (\_ -> putStrLn "wooohooo") <$> keyE --filterE (elem KC_ESCAPE) 
         
         
 printKey :: Show a => a -> IO ()

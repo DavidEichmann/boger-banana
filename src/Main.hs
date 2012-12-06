@@ -10,5 +10,6 @@ import BB.Workarounds
 
 main::IO()
 main = do
+        --keyInputExample
         hogreHois01
         --hogre01
