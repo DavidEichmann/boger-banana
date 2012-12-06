@@ -7,10 +7,10 @@ module Reactive.Banana.BOGRE where
 
 import Control.Concurrent (forkIO)
 
-import qualified Reactive.Banana.OIS as OIS
+import Reactive.Banana.OIS
 import Reactive.Banana.OGRE
 
-type BogreSystem = (DisplaySystem, OIS.InputSystem)
+type BogreSystem = (DisplaySystem, InputSystem)
 
 startBogreSync :: BogreSystem -> IO ()
 startBogreSync (ds, is) = render win r () handler
@@ -18,7 +18,7 @@ startBogreSync (ds, is) = render win r () handler
                         win = window ds
                         r = root ds
                         handler _ td _ = do
-                                OIS.capture is
+                                capture is
                                 fireFrameEvent ds td
                                 return ((), True)
                 

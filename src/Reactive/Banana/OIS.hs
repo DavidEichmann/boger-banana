@@ -99,11 +99,12 @@ getKeysDown is = filterM (isKeyDown is) allKeyCodes
 -- some direct polling functions
 --
 
--- call the capture function of all input Objects
+-- call the capture function of all input Objects, and poll for changes
 capture :: InputSystem -> IO ()
-capture ((kb,_), (ms,_)) = do
+capture is@((kb,_), (ms,_)) = do
         object_capture $ toObject kb 
         object_capture $ toObject ms
+        poll is 
 
 -- Check if a key is down. Note that you should call capture before using isKeyDown
 isKeyDown :: InputSystem -> KeyCode -> IO (Bool)

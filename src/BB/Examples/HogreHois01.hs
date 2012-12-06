@@ -17,6 +17,8 @@ import Reactive.Banana.BOGRE
 import BB.Workarounds
 import BB.Util.Vec
 
+import Data.List (insert)
+
 import Control.Concurrent (threadDelay)
 
 -- based on basic tutorial 6 from Ogre Wiki.
@@ -80,13 +82,14 @@ network ds is (node1,node2) = do
         -- output
         reactimate $ (setPosition node1) <$> pos1  
         reactimate $ (setPosition node2) <$> pos2
+        
+        -- print keydowns
         reactimate $ printKey <$> keyE
         
         -- stop on escape key
-        --reactimate $ (closeDisplaySystem ds) <$ (keyE) --filterE (elem KC_ESCAPE) 
-        --reactimate $ (\_ -> putStrLn "wooohooo") <$> keyE --filterE (elem KC_ESCAPE) 
+        reactimate $ (closeDisplaySystem ds) <$ (filterE (elem KC_ESCAPE) keyE) 
         
-        
+         
 printKey :: Show a => a -> IO ()
 printKey pressedKeys = do
         putStrLn $ "Pressed keys: " ++ (show pressedKeys)
