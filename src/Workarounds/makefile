@@ -1,28 +1,18 @@
 default: clean main
 
-main: lib-workarounds
+main:
+	# generate c code
+	cgen -o cbits --header=Workarounds.h -i interface/Workarounds.if cpp/Workarounds.h
 	# generate graph file
 	grgen -o interface/Workarounds.gr -i interface/Workarounds.if cpp/Workarounds.h
 	# generate haskell
 	cgen-hs --inherit interface/Workarounds.gr --interface interface/Workarounds.if --hierarchy BB. -o BB cbits/*.h
-	# build the test haskel main
-	#ghc --make -o main -L. -lworkarounds -lstdc++ hs/main.hs
+	# copy files
 	cp BB/*.hs ../BB
-	cp libworkarounds.a ../../lib
+	# modify types to work with HOGRE and HOIS
+	sed -i 's/newtype \(.*\)= [A-Z,a-z]*__\([a-z,A-Z,0-1]*\).*/type \1 = \2/g' ../BB/Types.hs
+	sed -i '4i import Graphics.Ogre.Types\nimport OIS.Types\n' ../BB/Types.hs
 	
-	
-
-lib-workarounds:
-	# generate c
-	cgen -o cbits --header=Workarounds.h -i interface/Workarounds.if cpp/Workarounds.h
-	# make a library
-	g++ -c -Icpp -o cbits/Workarounds.o cbits/Workarounds.cpp
-	ar q libworkarounds.a cbits/Workarounds.o
-	#
-	# Now u can put libworkarounds.a into a directory /some/path and then compile with ghc ... -L/some/path -lworkarounds
-	# NOTE that in the -l option u remove the "lib" and ".a" pre and postfix
-	#
-
 clean:
 	rm -f -r 'cbits'
 	rm -f -r 'BB'
