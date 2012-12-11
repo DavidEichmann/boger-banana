@@ -39,6 +39,8 @@ import Control.Concurrent (
                 threadDelay,
                 forkIO
         )
+        
+import BB.Workarounds
 
 
 
@@ -50,14 +52,14 @@ type InputSystem = (
                 (Mouse,    (AddHandler MouseState, MouseState -> IO ()))
         )
 type KeysPressed = [KeyCode]
-type MouseState = ()
+type MouseState = (Int, Int)    -- relative x and y values
 
 createInputSystem :: Int -> IO (InputSystem)
 createInputSystem hwnd = do
         im <- inputManager_createInputSystem_size_t hwnd
         -- get mouse and keyboard objects
         -- unsafeCoerce instead of static_cast
-        mouse <- unsafeCoerce $ inputManager_createInputObject im OISMouse True ""
+        mouse <- unsafeCoerce $ inputManager_createInputObject im OISMouse False ""
         keyboard <- unsafeCoerce $ inputManager_createInputObject im OISKeyboard True ""
         -- create the addhandlers
         mouseNewAddHandler <- newAddHandler
@@ -81,7 +83,7 @@ startPolling is pollDelay = do
         startPolling is pollDelay
         
 poll :: InputSystem -> IO ()
-poll is = do
+poll is@((_,_), (ms,_)) = do
         -- poll keyboard
         -- at the moment only poll a few keys
         keysDown <- getKeysDown is
@@ -89,8 +91,9 @@ poll is = do
         fireKeyboadEvent is keyPressed
         
         -- poll mouse
-        -- TODO
-        
+        relX <- getMouseRelX ms
+        relY <- getMouseRelY ms
+        fireMouseEvent is (relX, relY)
 
 getKeysDown :: InputSystem -> IO (KeysPressed)
 getKeysDown is = filterM (isKeyDown is) allKeyCodes
