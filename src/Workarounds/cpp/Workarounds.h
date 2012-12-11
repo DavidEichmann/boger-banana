@@ -11,11 +11,15 @@ public:
 	//
 	
 	static int getMouseRelX(OIS::Mouse* m) {
-		return m->getMouseState().X.rel;
+		int x = m->getMouseState().X.rel;
+		//std::cout << "rel x: " << x << std::endl;
+		return x;
 	};
 	
 	static int getMouseRelY(OIS::Mouse* m) {
-		return m->getMouseState().Y.rel;
+		int y = m->getMouseState().Y.rel;
+		//std::cout << "rel y: " << y << std::endl;
+		return y;
 	};
 	
 	
