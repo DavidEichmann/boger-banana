@@ -65,23 +65,25 @@ network ds is (node1,node2) = do
         -- input
         keyE <- getKeyE is
         mouseE <- getMouseE is
-        dtE <- getFrameEvent ds  -- think of as time delta (dt)
+        dtE <- getFrameEvent ds  -- think of as time delta (dt) for the current frame
         let tE = accumE 0 ((+) <$> dtE)      -- think of this as absolute time
         let tB = stepper 0 tE                  -- think of this as absolute time
 
-        -- network
         
-        -- time
-        -- at each frame
+        -- Movement behavior all movements at 1 per second
+        let velocityB = stepper (\_ -> (0,0,0)) (mouseMoveToVelocity <$> mouseE) where
+                sensitivity = 20
+                mouseMoveToVelocity (x,y) dt = scale (sensitivity*dt) (fromIntegral x, negate (fromIntegral  y), 0)
         
-        -- Movement behaviors all movements at 1 per second
-        let velocityB = stepper (\_ -> (0,0,0)) ((\(x,y) dt -> scale dt (fromIntegral x, negate (fromIntegral  y), 0)) <$> mouseE)
-                              
-        --let pd1E = apply (movementB) dtE
-        --let pos1E = accumE (0,0,0) (apply (pure add) pd1E)
         
-        --Create a delayed velocity behaviour
-        let delay = 1
+        
+        
+        
+        --
+        -- Create a delayed velocity behavior
+        --
+        
+        let delay = 3
         velChangeE <- changes velocityB
         initVel <- initial velocityB
         let initHist = [(0,initVel)]
@@ -96,7 +98,7 @@ network ds is (node1,node2) = do
                                 | otherwise             = take 1 hist' -- save 1 extra element used in derive function
                         
         -- The time delta dt is  normally applied to a single velocity function, but the dt may need to be
-        -- applied to many different velocity functions if dt is large enough such that the velocity behaviour
+        -- applied to many different velocity functions if dt is large enough such that the velocity behavior
         -- changed delay time ago within that time delta
         -- split dt over any valid functions
         let derive time histDec dt = derived where
@@ -117,25 +119,27 @@ network ds is (node1,node2) = do
                 
         let delVelB = stepper initVel $ (derive <$> tB) <@> velHistoryAbsTE
         
+        --
+        -- Done creating delayed velocity behavior
+        --
         
-        {-
-        --
-        --
-                Delayed events happen according to mouse events... they are correct, due to variable frame rates,
-                there are nocticable errors. Must think of an errorfree way of avoiding these errors. possibly by
-                abstracting away the time events, and using only behaviourse that are functions of time (or dt)
-        --
-        --
-        -}
         
-        let pos1E = accumE (0,0,0) (fmap (add . (scale (20))) (velocityB <@> dtE))
-        let pos2E = accumE (0,0,0) (fmap (add . (scale (20))) (delVelB <@> dtE))
+        
+        
+        
+        -- use velocity behaviors to accumulate positions
+        let pos1E = accumE (0,0,0) (add <$> (velocityB <@> dtE))
+        let pos2E = accumE (0,0,0) (add <$> (delVelB <@> dtE))
         -- output
         reactimate $ (setPosition node1) <$> pos1E
         reactimate $ (setPosition node2) <$> pos2E
         -- stop on escape key
         reactimate $ (closeDisplaySystem ds) <$ (filterE (elem KC_ESCAPE) keyE) 
-        
+
+{-
+setVelB :: Frameworks t => SceneNode -> Behavior t (Float -> Vec3) -> Moment r ()
+setVelB node vel = unimplemented
+-}
          
 printKey :: Show a => a -> IO ()
 printKey pressedKeys = do
