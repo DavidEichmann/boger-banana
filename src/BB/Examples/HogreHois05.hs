@@ -1,4 +1,4 @@
-module BB.Examples.HogreHois04
+module BB.Examples.HogreHois05
 where
 
 import Reactive.Banana
@@ -18,15 +18,15 @@ import Reactive.Banana.BOGRE
 import BB.Workarounds
 import BB.Util.Vec
 
-import Data.List (insert)
+import Data.List (insert, find)
 import Data.Maybe
 
 import Control.Concurrent (threadDelay)
 
 -- based on basic tutorial 6 from Ogre Wiki.
 -- http://www.ogre3d.org/tikiwiki/Basic+Tutorial+6&structure=Tutorials
-hogreHois04 :: IO ()
-hogreHois04 = do
+hogreHois05 :: IO ()
+hogreHois05 = do
         ds <- createDisplaySystem
         
         let smgr = sceneManager ds
@@ -75,44 +75,61 @@ network ds is (node1,node2) = do
         -- at each frame
         
         -- Movement behaviors all movements at 1 per second
-        let mouseMoveE = (\(x,y) -> (fromIntegral x, negate (fromIntegral  y), 0)) <$> mouseE
+        let velocityB = stepper (\_ -> (0,0,0)) ((\(x,y) dt -> scale dt (fromIntegral x, negate (fromIntegral  y), 0)) <$> mouseE)
                               
-        let pos1B = accumB (0,0,0) (fmap (add . (scale (0.25))) mouseMoveE)
         --let pd1E = apply (movementB) dtE
         --let pos1E = accumE (0,0,0) (apply (pure add) pd1E)
         
-        --follow
-        let delay = 3
-        let historyMouseE = accumE [(0,(0,0))] (pushDrop <$> taggedMouseE) where
-                taggedMouseE = apply ((,) <$> tB) mouseE
-                pushDrop e hist = e : (dropped hist) where
+        --Create a delayed velocity behaviour
+        let delay = 1
+        velChangeE <- changes velocityB
+        initVel <- initial velocityB
+        let initHist = [(0,initVel)]
+        let velHistoryAbsTE = accumE initHist (pushDrop <$> velChangeTaggedE) where
+                velChangeTaggedE = apply ((,) <$> tB) velChangeE
+                pushDrop e hist = e : prune hist where
                         time = fst e
-                        dropped = takeWhile ((> time-delay) . fst)      -- prune old events
+                        -- prune old events
+                        prune []                        = []
+                        prune hist'@((a@(at,_)):xs) 
+                                | at >= time-delay      = a : prune xs
+                                | otherwise             = take 1 hist' -- save 1 extra element used in derive function
+                        
+        -- The time delta dt is  normally applied to a single velocity function, but the dt may need to be
+        -- applied to many different velocity functions if dt is large enough such that the velocity behaviour
+        -- changed delay time ago within that time delta
+        -- split dt over any valid functions
+        let derive time histDec dt = derived where
+                derived = derive' histInc dt (time-delay)
+                histInc = reverse histDec        -- in increasing time
+                -- think of the arguments as:
+                        -- history (increasing) left to look at
+                        -- time left
+                        -- current time goign through the history
+                derive' [] dt' _                 = error("no previouse event???")
+                derive' ((_,av):[]) dt' _        = av dt'
+                derive' ((_,av):rest@((bt,_):_)) dt' time'
+                        | bt <= time'             = derive' rest dt' time'    -- move to first applicable velocity function
+                        -- once pruned, apply the velocity, handling the first special case where the time is inbetween events
+                        | otherwise              = (av timeOnA) `add` (derive' rest dt'' bt) where
+                                                        dt'' = dt' - timeOnA
+                                                        timeOnA = min (bt-time') (dt')
+                
+        let delVelB = stepper initVel $ (derive <$> tB) <@> velHistoryAbsTE
         
-        --reactimate $ (putStrLn "lol") <$ (filterE (\(a,b) -> a /= 0 && b /= 0) mouseE)
-        let delayedMouseB = stepper [] historyMouseE 
-        let delayedMouseE = (histLookup <$> delayedMouseB) <@> tE where
-                histLookup hist time = (snd.headOrNull) (dropWhile ((> time-delay) . fst) hist)
-                headOrNull (head:_) = head
-                headOrNull _ = (0,(0,0))
-        reactimate $ (putStrLn . show) <$> delayedMouseE
-        let delayedMME = (\(x,y) -> (fromIntegral x, negate (fromIntegral  y), 0)) <$> delayedMouseE
-        let pos2B = accumB (0,0,0) (fmap (add . (scale (0.25))) delayedMME)
         
         {-
         --
         --
                 Delayed events happen according to mouse events... they are correct, due to variable frame rates,
                 there are nocticable errors. Must think of an errorfree way of avoiding these errors. possibly by
-                abstracting away the time events, and using only behaviourse that are functions of time (or dt)....
-                delay behaviours instead of events
+                abstracting away the time events, and using only behaviourse that are functions of time (or dt)
         --
         --
         -}
         
-        pos1E <- changes pos1B
-        pos2E <- changes pos2B
-        
+        let pos1E = accumE (0,0,0) (fmap (add . (scale (20))) (velocityB <@> dtE))
+        let pos2E = accumE (0,0,0) (fmap (add . (scale (20))) (delVelB <@> dtE))
         -- output
         reactimate $ (setPosition node1) <$> pos1E
         reactimate $ (setPosition node2) <$> pos2E
@@ -123,7 +140,6 @@ network ds is (node1,node2) = do
 printKey :: Show a => a -> IO ()
 printKey pressedKeys = do
         putStrLn $ "Pressed keys: " ++ (show pressedKeys)
-        
         
         
         
