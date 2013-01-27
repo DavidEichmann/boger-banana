@@ -1,4 +1,5 @@
 module BB.Util.Vec (
+        Vec3,
         scale,
         add,
         to,
