@@ -76,7 +76,7 @@ network ds is (node1,node2) = do
         
         -- set node2 velocity to mouse velocity with a time delay
         --setDelayedVelocityB ds node2 mouseVelB 0
-        
+
         -- stop on escape key
         reactimate $ (closeDisplaySystem ds) <$ (filterE (elem KC_ESCAPE) keyE)
 
@@ -93,8 +93,6 @@ setVelocityB ds node velocityB = do
         dtE <- getFrameEvent ds
         let posE = accumE (0,0,0) (add <$> (((flip scale) <$> velocityB) <@> dtE))
         reactimate $ (setPosition node) <$> posE
-        
-
 
 setDelayedVelocityB :: Frameworks t =>  DisplaySystem -> SceneNode -> Behavior t Vec3 -> Float -> Moment t ()
 setDelayedVelocityB ds node velocityB delay = do
@@ -140,7 +138,6 @@ setDelayedVelocityB ds node velocityB delay = do
         -- use velocity behaviors to accumulate positions
         let pos2E = accumE (0,0,0) (add <$> ((delVelB) <@> dtE))
         reactimate $ (setPosition node) <$> pos2E
-
     
 getDelayedVelocityB :: Frameworks t =>  DisplaySystem -> SceneNode -> Behavior t Vec3 -> Float -> Moment t (Behavior t Vec3)
 getDelayedVelocityB ds node velocityB delay = do
@@ -192,7 +189,7 @@ getDelayedVelocityB ds node velocityB delay = do
         let pos2E = accumE (0,0,0) (add <$> ((delVelB) <@> dtE))
         reactimate $ (setPosition node) <$> pos2E
         -}
-              
+
 printKey :: Show a => a -> IO ()
 printKey pressedKeys = do
         putStrLn $ "Pressed keys: " ++ (show pressedKeys)
