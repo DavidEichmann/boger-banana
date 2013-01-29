@@ -7,12 +7,11 @@ import BB.Examples.HogreHois02
 import BB.Examples.HogreHois03
 import BB.Examples.HogreHois04
 import BB.Examples.HogreHois05
+import BB.Examples.Snake
 
 import BB.Workarounds
 
 
 main::IO()
 main = do
-        --keyInputExample
-        hogreHois05
-        --hogre01
+        snake
