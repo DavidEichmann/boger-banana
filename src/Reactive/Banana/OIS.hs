@@ -4,11 +4,12 @@
 module Reactive.Banana.OIS (
         InputSystem,
         createInputSystem,
-        getKeyE,
+        getKeysE,
         getMouseE,
         startPolling,
         capture,
-        KeyCode(..)
+        KeyCode(..),
+        KeysPressed
 ) where
 
 
@@ -29,15 +30,12 @@ import Reactive.Banana.Frameworks (
 
 import Foreign.C.Types (CInt(..))
 import Unsafe.Coerce
-import Data.List ((\\))
 import Control.Monad (
-                filterM,
-                when
+                filterM
         )
 import Control.Concurrent (
                 ThreadId,
-                threadDelay,
-                forkIO
+                threadDelay
         )
         
 import BB.Workarounds
@@ -67,8 +65,8 @@ createInputSystem hwnd = do
         -- done, package into a InputSystem
         return ((keyboard, keyboardNewAddHandler), (mouse, mouseNewAddHandler))
 
-getKeyE :: Frameworks t => InputSystem -> Moment t (Event t KeysPressed)
-getKeyE = fromAddHandler . getKeyboardAddHandler
+getKeysE :: Frameworks t => InputSystem -> Moment t (Event t KeysPressed)
+getKeysE is = (fromAddHandler . getKeyboardAddHandler) is
 
 getMouseE :: Frameworks t => InputSystem -> Moment t (Event t MouseState)
 getMouseE = fromAddHandler . getMouseAddHandler

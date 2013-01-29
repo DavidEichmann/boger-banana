@@ -63,7 +63,7 @@ hogreHois03 = do
 network :: Frameworks t => DisplaySystem -> InputSystem -> (SceneNode,SceneNode) -> Moment t ()
 network ds is (node1,node2) = do
         -- input
-        keyE <- getKeyE is
+        keyE <- getKeyE (ds, is) KC_ESCAPE
         mouseE <- getMouseE is
         dtE <- getFrameEvent ds  -- think of as time delta (dt)
         let tE = accumE 0 ((+) <$> dtE)      -- think of this as absolute time
@@ -100,7 +100,7 @@ network ds is (node1,node2) = do
         reactimate $ (setPosition node2) <$> pos2E
         --reactimate $ (putStrLn. show) <$> mouseE
         -- stop on escape key
-        reactimate $ (closeDisplaySystem ds) <$ (filterE (elem KC_ESCAPE) keyE) 
+        reactimate $ (closeDisplaySystem ds) <$ keyE
         
          
 printKey :: Show a => a -> IO ()
