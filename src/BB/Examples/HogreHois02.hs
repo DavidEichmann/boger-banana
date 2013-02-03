@@ -63,7 +63,7 @@ hogreHois02 = do
 network :: Frameworks t => DisplaySystem -> InputSystem -> (SceneNode,SceneNode) -> Moment t ()
 network ds is (node1,node2) = do
         -- input
-        keyE <- getKeysE is
+        keyE <- getKeysPressE is
         dtE <- getFrameEvent ds  -- think of as time delta (dt)
         let tE = accumE 0 ((+) <$> dtE)      -- think of this as absolute time
         let tB = stepper 0 tE                  -- think of this as absolute time

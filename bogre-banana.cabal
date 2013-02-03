@@ -14,8 +14,8 @@ library
                    hois,
                    monad-control,
                    hogre
-  ghc-options:     -Wall
-  extensions: 	   ForeignFunctionInterface
+  ghc-options:     -Wall -XImpredicativeTypes
+  extensions: 	   ForeignFunctionInterface 
   extra-libraries: stdc++
   C-sources: 	   ./src/Workarounds/cbits/Workarounds.cpp
   include-dirs:	   ./src/Workarounds/cpp/
@@ -29,7 +29,7 @@ executable bogre-banana
                    hois,
                    hogre
   ghc-options:     -Wall
-  extensions: 	   ForeignFunctionInterface
+  extensions: 	   ForeignFunctionInterface ImpredicativeTypes
   C-sources: 	   ./src/Workarounds/cbits/Workarounds.cpp
   include-dirs:	   ./src/Workarounds/cpp/
 

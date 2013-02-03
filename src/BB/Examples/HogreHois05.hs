@@ -13,6 +13,7 @@ import Reactive.Banana.OGRE
 import Reactive.Banana.OIS
 import Reactive.Banana.BOGRE
 
+import BB.Util.Vec
 
 
 
@@ -39,19 +40,26 @@ gameBuilder bs@(ds,_) smgr = do
 
 
 network :: Frameworks t => BogreSystem -> (SceneNode,SceneNode) -> Moment t ()
-network bs (node1,node2) = do
+network ubs (node1,node2) = do
+        -- hook
+        bs <- hookBogerSystem ubs
+        
         -- Mouse input (as a velocity Behaviour)
         mouseVelB <- getMouseVelocityB bs
         
         -- set node1 velocity to mouse velocity
         setVelocityB bs node1 mouseVelB
         
-        deVelB <- getDelayedVelocityB bs mouseVelB 4
-        setVelocityB bs node2 deVelB
+        --deVelB <- getDelayedVelocityB bs mouseVelB 4
+        --setVelocityB bs node2 deVelB
         
         -- stop on escape key
-        escE <- getKeyE bs KC_ESCAPE
+        escE <- getKeyDownE bs KC_ESCAPE
         reactimate $ (stopBogre bs) <$ escE
 
+        
+        --dtE <- getFrameEvent (fst bs)
+        --let posE = accumE (0,0,0) (add <$> (((flip scale) <$> mouseVelB) <@> dtE))
+        --reactimate $ (setPosition node1) <$> posE
         
         

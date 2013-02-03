@@ -41,7 +41,7 @@ keyInputExample = do
 network :: Frameworks t => InputSystem -> Moment t ()
 network is = do
         -- input
-        keyE <- getKeysE is
+        keyE <- getKeysPressE is
         
         -- output
         reactimate $ printKey <$> keyE

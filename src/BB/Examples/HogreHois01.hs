@@ -61,7 +61,7 @@ hogreHois01 = do
 network :: Frameworks t => DisplaySystem -> InputSystem -> (SceneNode,SceneNode) -> Moment t ()
 network ds is (node1,node2) = do
         -- input
-        keyE <- getKeysE is
+        keyE <- getKeysPressE is
         frameE <- getFrameEvent ds
 
         -- network

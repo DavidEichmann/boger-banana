@@ -4,12 +4,13 @@
 module Reactive.Banana.OIS (
         InputSystem,
         createInputSystem,
-        getKeysE,
+        getKeysPressE,
         getMouseE,
-        startPolling,
         capture,
         KeyCode(..),
-        KeysPressed
+        KeysPressed,
+        KeyState(..),
+        MouseState
 ) where
 
 
@@ -52,6 +53,9 @@ type InputSystem = (
 type KeysPressed = [KeyCode]
 type MouseState = (Int, Int)    -- relative x and y values
 
+data KeyState = Up | Down
+        deriving Eq
+
 createInputSystem :: Int -> IO (InputSystem)
 createInputSystem hwnd = do
         im <- inputManager_createInputSystem_size_t hwnd
@@ -65,47 +69,33 @@ createInputSystem hwnd = do
         -- done, package into a InputSystem
         return ((keyboard, keyboardNewAddHandler), (mouse, mouseNewAddHandler))
 
-getKeysE :: Frameworks t => InputSystem -> Moment t (Event t KeysPressed)
-getKeysE is = (fromAddHandler . getKeyboardAddHandler) is
+getKeysPressE :: Frameworks t => InputSystem -> Moment t (Event t KeysPressed)
+getKeysPressE is = (fromAddHandler . getKeyboardAddHandler) is
 
 getMouseE :: Frameworks t => InputSystem -> Moment t (Event t MouseState)
 getMouseE = fromAddHandler . getMouseAddHandler
 
-startPolling :: InputSystem -> Int -> IO (ThreadId)
-startPolling is pollDelay = do
-        -- capture input devices
-        capture is
-        -- sleep thread
-        threadDelay pollDelay
-        -- loop
-        startPolling is pollDelay
-        
-poll :: InputSystem -> IO ()
-poll is@((_,_), (ms,_)) = do
-        -- poll keyboard
-        -- at the moment only poll a few keys
-        keysDown <- getKeysDown is
-        let keyPressed =  keysDown
-        fireKeyboadEvent is keyPressed
-        
-        -- poll mouse
-        relX <- getMouseRelX ms
-        relY <- getMouseRelY ms
-        fireMouseEvent is (relX, relY)
-
-getKeysDown :: InputSystem -> IO (KeysPressed)
-getKeysDown is = filterM (isKeyDown is) allKeyCodes
+-- | Get all the keys currenly down (being pressed)
+getKeysPress :: InputSystem -> IO (KeysPressed)
+getKeysPress is = filterM (isKeyDown is) allKeyCodes
 
 --
 -- some direct polling functions
 --
 
 -- call the capture function of all input Objects, and poll for changes
-capture :: InputSystem -> IO ()
+capture :: InputSystem -> IO (MouseState, KeysPressed)
 capture is@((kb,_), (ms,_)) = do
         object_capture $ toObject kb 
         object_capture $ toObject ms
-        poll is 
+        
+        -- poll keyboard
+        keyPressed <- getKeysPress is
+        
+        -- poll mouse
+        relX <- getMouseRelX ms
+        relY <- getMouseRelY ms
+        return ((relX, relY), keyPressed)
 
 -- Check if a key is down. Note that you should call capture before using isKeyDown
 isKeyDown :: InputSystem -> KeyCode -> IO (Bool)

@@ -34,8 +34,6 @@ data World = World {
         }
         
 data DisplaySystem = DisplaySystem {
-                fireFrameEvent :: Float -> IO (), -- event hook
-                frameAddHandler :: AddHandler Float, -- event hook
                 window :: RenderWindow,
                 root :: Root,
                 sceneManager :: SceneManager
@@ -85,26 +83,10 @@ createDisplaySystem = do
         (renderAH, fireRenderEvent) <- newAddHandler
         
         return DisplaySystem {
-                        fireFrameEvent = fireRenderEvent,
-                        frameAddHandler = renderAH,
                         window = window,
                         root = root,
                         sceneManager = smgr
                 }
-                
-startRenderingSync :: DisplaySystem -> IO ()
-startRenderingSync ds = render win r () handler
-                where
-                        win = window ds
-                        r = root ds
-                        handler _ td _ = do
-                                fireFrameEvent ds td
-                                return ((), True)
-                
-startRendering :: DisplaySystem -> IO ()
-startRendering ds = do 
-        _ <- forkIO $ startRenderingSync ds
-        return ()
                                 
 closeDisplaySystem :: DisplaySystem -> IO ()
 closeDisplaySystem = root_delete . root
@@ -121,46 +103,21 @@ addEntity ds mesh = do
         node_addChild (toNode rootNode) (toNode node)
         sceneNode_attachObject node (toMovableObject ent)
         return (ent, node)
-  
-getFrameEvent :: Frameworks t => DisplaySystem -> Moment t (Event t Float)
-getFrameEvent = fromAddHandler . frameAddHandler 
+
 
 setPosition :: SceneNode -> (Float, Float, Float) -> IO ()
-setPosition sn (x,y,z) = node_setPosition (toNode sn) x y z 
+setPosition sn (x,y,z) = node_setPosition (toNode sn) x y z
 
+setPositionRelative :: SceneNode -> (Float, Float, Float) -> IO ()
+setPositionRelative sn (x,y,z) = node_translate_NodePfloatfloatfloatNodeTransformSpace (toNode sn) x y z TS_WORLD
 
-
-
-{-
-renderWorld :: World -> IO ()
-renderWorld w = do
-        windowEventUtilities_messagePump
-        closed <- renderWindow_isClosed $ window w
-        let r = root w
-        if closed
-                then return ()
-                else do
-                        (\node (x, y, z) -> node_setPosition (toNode node) x y z) (node w) (position w)
-                        success <- root_renderOneFrame_RootP r
-                        time <- root_getTimer r >>= timer_getMicroseconds
-                        if success
-                                then fireFrameEvent w (w, time)
-                                else return ()
-
-        
-
-reactimateWorld :: Frameworks t => Event t World -> Moment t ()
-reactimateWorld worldE = reactimate $ renderWorld <$> worldE -}
-
-
-
-render :: RenderWindow -> Root -> a -> (Root -> Float -> a -> IO (a, Bool)) -> IO a
+render :: RenderWindow -> Root -> a -> (Root -> Float -> Float -> a -> IO (a, Bool)) -> IO a
 render win root value fun = do
     timer <- root_getTimer root
     time <- timer_getMicroseconds timer
     render' time win root value fun
 
-render' :: Int -> RenderWindow -> Root -> a -> (Root -> Float -> a -> IO (a, Bool)) -> IO a
+render' :: Int -> RenderWindow -> Root -> a -> (Root -> Float -> Float -> a -> IO (a, Bool)) -> IO a
 render' time win root value fun = 
   do windowEventUtilities_messagePump
      closed <- renderWindow_isClosed win
@@ -170,8 +127,9 @@ render' time win root value fun =
          success <- root_renderOneFrame_RootP root
          timer <- root_getTimer root
          time' <- timer_getMicroseconds timer
-         let delta = (fromIntegral (time' - time)) / 1000000
-         (value', cont) <- fun root delta value
+         let tiF = (fromIntegral (time)) / 1000000
+         let tfF = (fromIntegral (time')) / 1000000
+         (value', cont) <- fun root tiF tfF value
          if success && cont
            then render' time' win root value' fun
            else return value'
