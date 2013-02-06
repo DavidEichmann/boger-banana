@@ -26,6 +26,9 @@ import Control.Monad
 import Graphics.Ogre.HOgre
 import Graphics.Ogre.Types
 
+import BB.Workarounds
+
+
 type Position = (Float,Float,Float)
 
 data World = World {
@@ -104,6 +107,13 @@ addEntity ds mesh = do
         sceneNode_attachObject node (toMovableObject ent)
         return (ent, node)
 
+getPosition :: SceneNode -> IO (Float, Float, Float)
+getPosition sn = do
+        pos <- node_getPosition (toNode sn)
+        x <- getVector3X pos
+        y <- getVector3Y pos
+        z <- getVector3Z pos
+        return (x,y,z)
 
 setPosition :: SceneNode -> (Float, Float, Float) -> IO ()
 setPosition sn (x,y,z) = node_setPosition (toNode sn) x y z

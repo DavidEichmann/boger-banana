@@ -27,6 +27,18 @@ public:
 	// OGRE
 	//
 	
+	static float getVector3X(Ogre::Vector3* v) {
+		return v->x;
+	}
+	
+	static float getVector3Y(Ogre::Vector3* v) {
+		return v->y;
+	}
+	
+	static float getVector3Z(Ogre::Vector3* v) {
+		return v->z;
+	}
+	
 	static size_t getWindowHandler(Ogre::RenderWindow* win) {
 		OIS::ParamList pl;
 		size_t windowHnd = 0;

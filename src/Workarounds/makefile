@@ -10,8 +10,9 @@ main:
 	# copy files
 	cp BB/*.hs ../BB
 	# modify types to work with HOGRE and HOIS
-	sed -i 's/newtype \(.*\)= [A-Z,a-z]*__\([a-z,A-Z,0-1]*\).*/type \1 = \2/g' ../BB/Types.hs
-	sed -i '4i import Graphics.Ogre.Types\nimport OIS.Types\n' ../BB/Types.hs
+	sed -i 's/newtype \(.*\)= Ogre__\([a-z,A-Z,0-9]*\).*/type \1 = Graphics.Ogre.Types.\2/g' ../BB/Types.hs
+	sed -i 's/newtype \(.*\)= OIS__\([a-z,A-Z,0-9]*\).*/type \1 = OIS.Types.\2/g' ../BB/Types.hs
+	sed -i '4i import qualified Graphics.Ogre.Types\nimport qualified OIS.Types\n' ../BB/Types.hs
 	
 clean:
 	rm -f -r 'cbits'

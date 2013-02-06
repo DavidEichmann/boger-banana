@@ -66,7 +66,7 @@ runGame gameBuilder = do
         
         -- default camera
         cam <- sceneManager_getCamera smgr "PlayerCam"
-        camera_setPosition_CameraPfloatfloatfloat cam 0 0 200
+        camera_setPosition_CameraPfloatfloatfloat cam 0 0 500
         camera_lookAt cam 0 0 (-300)
         
         -- default ambient light
@@ -132,6 +132,13 @@ hookBogerSystem (ds,is) frameAddHandler updateWorldAddHandler = do
               _updateWorldE = uwE
         }
 
+getPositionB :: Frameworks t => SceneNode -> Moment t (Behavior t Vec3)
+getPositionB n = fromPoll $ getPosition n
+
+getMousePosB :: Frameworks t => HookedBogreSystem t ->  Moment t (Behavior t Vec3)
+getMousePosB bs = do
+        velB <- getMouseVelocityB bs
+        return $ velocityToPositionB bs (0,0,0) velB
 
 getMouseVelocityB :: Frameworks t => HookedBogreSystem t ->  Moment t (Behavior t Vec3)
 getMouseVelocityB bs = do
@@ -151,6 +158,25 @@ getMouseVelocityB bs = do
         allow a conversion to non-dynamic version that can simple take the arguments and
         artificially create an event for it that just fires once at time 0.     
 -}
+
+-- Whenever an event fires, a new node will be created and returned in a new event stream
+createNodeOnE :: Frameworks t => HookedBogreSystem t -> Event t a -> Moment t (Event t SceneNode)
+createNodeOnE bs createOnE = do
+        let ubs = unhookBogerSystem bs
+        let
+                createNode :: Frameworks s => BogreSystem -> Moment s (SceneNode)
+                createNode ubs = do
+                        (_,node) <- liftIO $ addEntity (fst ubs) "ogrehead.mesh"
+                        liftIO $ setPosition node (10000000,10000000,10000000)
+                        return node
+        execute (FrameworksMoment (createNode ubs)  <$ createOnE)
+        
+        
+    
+setPosB :: Frameworks t => HookedBogreSystem t -> SceneNode -> Behavior t Vec3  -> Moment t ()
+setPosB bs node posB = do
+        let dynamicB = ((:[]) . ((flip (,)) node)) <$> posB
+        setDynamicPositions bs dynamicB
     
 setVelocityB :: Frameworks t => HookedBogreSystem t -> SceneNode -> Behavior t Vec3  -> Moment t ()
 setVelocityB bs node velocityB = do
@@ -174,75 +200,91 @@ setDynamicVelocities bs nodeVelocityB = do
                 
         reactimate $ (doUpdates . toDPoses) <$> sampleE
 
+setDynamicPositions :: Frameworks t => HookedBogreSystem t -> Behavior t [(Vec3, SceneNode)]  -> Moment t ()
+setDynamicPositions bs nodeVelocityB = do
+        let uwE = _updateWorldE bs
+        let sampleE = nodeVelocityB <@ uwE
+        let
+                -- move the nodes
+                doUpdates :: [(Vec3, SceneNode)] -> IO ()
+                doUpdates nodeDPoses = mapM_ doUpdate nodeDPoses where
+                        doUpdate (pos, node) = setPosition node pos
+                
+        reactimate $ doUpdates <$> sampleE
+
 -- | take a behaviour and dynamically create delays. Only the currently needed history is stored, so
--- if a large delay is added, it may stay 0 untill the history catches up
+-- if a large delay is added, the resulting value will just be the latest recorded value untill history catches up
 -- event takes delays
 -- output is a behaviour of corresponding delayed Vec3 (latest added is at the head of the list)
-getDynamicDelayedBs :: Frameworks t =>  HookedBogreSystem t -> Behavior t Vec3 -> Event t  Float -> Moment t (Behavior t [Vec3])
-getDynamicDelayedBs bs masterB delayE = getWithInitDynamicDelayedBs bs masterB [] delayE
+getDynamicDelayedPositionBs :: Frameworks t =>  HookedBogreSystem t -> Behavior t Vec3 -> Event t  (Float, a) -> Moment t (Behavior t [(Vec3, a)])
+getDynamicDelayedPositionBs bs masterB delayTaggedE = getWithInitDynamicDelayedPositionBs bs masterB [] delayTaggedE
 
-getWithInitDynamicDelayedBs :: Frameworks t =>  HookedBogreSystem t -> Behavior t Vec3 -> [Float] -> Event t  Float -> Moment t (Behavior t [Vec3])
-getWithInitDynamicDelayedBs bs masterB initDelays delayE = do
+type DynamicDelayStep a = (BogreFrame, [(Float,Vec3)], Float, [Float], [a], [Vec3])
+
+getWithInitDynamicDelayedPositionBs :: Frameworks t =>  HookedBogreSystem t -> Behavior t Vec3 -> [(Float, a)] -> Event t (Float, a) -> Moment t (Behavior t [(Vec3, a)])
+getWithInitDynamicDelayedPositionBs bs masterB initDelaysTaggeed delayTaggedE = do
         -- as it may take some time for the history to fill up before the delay can produce values, we need some default temporary value
         let defaultVal = (0,0,0)
+        let initHist = [(0, defaultVal)]
         let
                 -- whenever there is a new delay, dynamically add it to the list
                 --      as it may take some time for the history to fill up before the delay can produce values,
                 --      simply set it to defaultVal
-                addDelay :: Float -> (BogreFrame, [(Float,Vec3)], Float, [Float], [Vec3]) -> (BogreFrame, [(Float,Vec3)], Float, [Float], [Vec3])
-                addDelay newDelay (frame, history, maxDelay, delays, delayedVals) = next where
-                        next = (frame, history, maxDelay', delays', delayedVals')
+                addDelay :: (Float, a) -> DynamicDelayStep a -> DynamicDelayStep a
+                addDelay (newDelay, newTag) (frame, history, maxDelay, delays, tags, delayedVals) = next where
+                        next = (frame, history, maxDelay', delays', tags', delayedVals')
                         maxDelay' = max maxDelay newDelay
                         delays' = newDelay : delays
+                        tags' = newTag : tags
                         delayedVals' = defaultVal : delayedVals
                 
                 -- whenever there is a change to the master behaviour, add it to the history 
                 --      we assume the behaviour changed at the start of the current frame
                 --      This also prunes old events that are older than maxDelay
-                addToHistory :: Vec3 -> (BogreFrame, [(Float,Vec3)], Float, [Float], [Vec3]) -> (BogreFrame, [(Float,Vec3)], Float, [Float], [Vec3])
-                addToHistory newVal (frame, history, maxDelay, delays, delayedVals) = next where
-                        next = (frame, history', maxDelay, delays, delayedVals)
-                        newValTime = frameTi frame
+                addToHistory :: Vec3 -> DynamicDelayStep a -> DynamicDelayStep a
+                addToHistory newVal (frame, history, maxDelay, delays, tags, delayedVals) = next where
+                        next = (frame, history', maxDelay, delays, tags, delayedVals)
+                        newValTime = frameTf frame
                         history' = (newValTime, newVal) : prune history where
                                 -- prune old events
                                 prune []                        = []
                                 prune hist'@((a@(at,_)):xs) 
                                         | at >= newValTime - maxDelay   = a : prune xs
-                                        | otherwise                     = take 1 hist' -- save 1 extra element used in derive function
+                                        -- save 1 extra element used in derive function --, and a final default value
+                                        | otherwise                     = (head hist'):[] --initHist
                 
                 -- update the current frame
-                updateFrame :: BogreFrame -> (BogreFrame, [(Float,Vec3)], Float, [Float], [Vec3]) -> (BogreFrame, [(Float,Vec3)], Float, [Float], [Vec3])
-                updateFrame frameNew (frame, history, maxDelay, delays, delayedVals) = next where
-                        next = (frameNew, history, maxDelay, delays, delayedVals)
+                updateFrame :: BogreFrame -> DynamicDelayStep a -> DynamicDelayStep a
+                updateFrame frameNew (frame, history, maxDelay, delays, tags, delayedVals) = next where
+                        next = (frameNew, history, maxDelay, delays, tags, delayedVals)
                         
                 -- whenever ready, progress the delayed behaviours to fit the current frame
-                stepFrame :: (BogreFrame, [(Float,Vec3)], Float, [Float], [Vec3]) -> (BogreFrame, [(Float,Vec3)], Float, [Float], [Vec3])
-                stepFrame (frame, history, maxDelay, delays, delayedVals) = next where
-                        next = (frame, history, maxDelay, delays, delayedVals')
+                stepFrame ::  DynamicDelayStep a -> DynamicDelayStep a
+                stepFrame (frame, history, maxDelay, delays, tags, delayedVals) = next where
+                        next = (frame, history, maxDelay, delays, tags, delayedVals')
                         delayedVals' = map derive delays where
-                                time = frameTi frame
+                                time = frameTf frame
                                 histInc = reverse history        -- history in increasing time
                                 dt = frameDt frame
                                 derive delay = derivedVel where
-                                        derivedVel = scale (1/dt) derivedVelInteg
+                                        delayTime = time-delay
+                                        derivedVel = derivedVelInteg
                                         derivedVelInteg | dt == 0       = defaultVal
-                                                        | otherwise     = derive' histInc dt (time-delay)
-                                        -- think of the arguments as:
-                                                -- history (increasing) left to look at
-                                                -- time left
-                                                -- current time going through the history
-                                        derive' [] _ _                 = error("no previouse event???")
-                                        derive' ((_,av):[]) dt' _        = scale dt' av
-                                        derive' ((_,av):rest@((bt,_):_)) dt' time'
-                                                | bt <= time'             = derive' rest dt' time'    -- move to first applicable velocity function
-                                                -- once pruned, apply the velocity, handling the first special case where the time is inbetween events
-                                                | otherwise              = (scale timeOnA av) `add` (derive' rest dt'' bt) where
-                                                                                dt'' = dt' - timeOnA
-                                                                                timeOnA = min (bt-time') (dt')
-                                                                                
+                                                        | otherwise     = derive' histInc
+                                                        
+                                        derive' []                 = error("no previouse event???")
+                                        derive' ((_,av):[])        = av
+                                        derive' ((at,av):rest@((bt,bv):_))
+                                                | bt <= delayTime   = derive' rest    -- move to first applicable velocity function
+                                                -- once pruned, linearly interpolate the position
+                                                | at <= delayTime   = (scale wa av) `add` (scale wb bv)
+                                                | otherwise         = av where
+                                                                        dtatb = bt - at
+                                                                        wb = (delayTime - at) / dtatb
+                                                                        wa = 1 - wb
                 -- convert the output of these functions, to the actual delayed values
-                getDelayedVals :: (BogreFrame, [(Float,Vec3)], Float, [Float], [Vec3]) -> [Vec3]
-                getDelayedVals (_,_,_,_,dVals) = dVals
+                getDelayedVals :: DynamicDelayStep a -> [(Vec3, a)]
+                getDelayedVals (_,_,_,_,tags,dVals) = zip dVals tags
 
         -- frame event
         let fE = frameE bs
@@ -250,18 +292,14 @@ getWithInitDynamicDelayedBs bs masterB initDelays delayE = do
         masterChangeE <- changes masterB
         -- dynamically add a delay Event
         -- delayE
-        
-        let initProps = foldl (flip addDelay) (nullFrame, [(0, defaultVal)], 0, [], []) initDelays
+        let initProps = foldl (flip addDelay) (nullFrame, initHist, 0, [], [], []) initDelaysTaggeed
         let stepsB = (accumB initProps (
+                        (addDelay       <$>  delayTaggedE) `union`
                         (updateFrame    <$>  fE) `union` 
                         (addToHistory   <$>  masterChangeE) `union` -- use previouse time as that is when the behaviour started (at the start of this frame)
-                        (stepFrame      <$  masterChangeE) `union`
-                        (addDelay       <$>  delayE)
+                        (stepFrame      <$   masterChangeE)
                 ))
         let delayedB = getDelayedVals <$> stepsB
-        
-        stepsE <- changes stepsB
-        
         return delayedB
 
 
@@ -273,10 +311,14 @@ setNotDynamicDelayedEvents bs beh delay = setDynamicDelayedEvents bs beh (delay 
 
 -}
 
-getDelayedVelocityB :: Frameworks t =>  HookedBogreSystem t -> Behavior t Vec3 -> Float -> Moment t (Behavior t Vec3)
-getDelayedVelocityB bs velocityB delay = do
-        dynVelBs <- getWithInitDynamicDelayedBs bs velocityB [delay] never
-        return $ head <$> dynVelBs where
+velocityToPositionB :: Frameworks t => HookedBogreSystem t -> Vec3 -> Behavior t Vec3 -> Behavior t Vec3
+velocityToPositionB bs initPos vel = accumB initPos (add <$> dPosE) where
+        dPosE = (((flip scale) <$> vel) <@> (frameDt <$> (frameE bs)))
+
+getDelayedB :: Frameworks t =>  HookedBogreSystem t -> Behavior t Vec3 -> Float -> Moment t (Behavior t Vec3)
+getDelayedB bs velocityB delay = do
+        dynVelBs <- getWithInitDynamicDelayedPositionBs bs velocityB [(delay, ())] never
+        return $ (fst . head) <$> dynVelBs where
 
 
 -- | get the KeyState changes (Up and Down) Event for a single key. 
