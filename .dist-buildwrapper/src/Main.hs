@@ -10,11 +10,14 @@ import BB.Examples.HogreHois04
 import BB.Examples.HogreHois05
 -}
 import BB.Examples.Snake
+import qualified  BB.Tutorials.Tutorial01 as Tut01 
 
 import BB.Workarounds
 
 
 main::IO()
 main = do
-        snake
+        --snake
+        Tut01.main
+        
         
