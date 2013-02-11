@@ -27,7 +27,7 @@ executable bogre-banana
                    base >= 4,
                    X11,
                    hois,
-                   hogre
+                   hogre,
   ghc-options:     -Wall
   extensions: 	   ForeignFunctionInterface ImpredicativeTypes
   C-sources: 	   ./src/Workarounds/cbits/Workarounds.cpp
