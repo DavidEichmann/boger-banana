@@ -10,7 +10,8 @@ import Control.Concurrent (forkIO)
 import Reactive.Banana
 import Reactive.Banana.Frameworks
 import Reactive.Banana.OIS
-import Reactive.Banana.OGRE
+import Reactive.Banana.OGRE hiding (addEntity)
+import qualified Reactive.Banana.OGRE as OGRE
 
 import Graphics.Ogre.HOgre
 import Graphics.Ogre.Types
@@ -166,7 +167,7 @@ createNodeOnE bs createOnE = do
         let
                 createNode :: Frameworks s => BogreSystem -> Moment s (SceneNode)
                 createNode ubs = do
-                        (_,node) <- liftIO $ addEntity (fst ubs) "ogrehead.mesh"
+                        (_,node) <- liftIO $ OGRE.addEntity (fst ubs) "ogrehead.mesh"
                         liftIO $ setPosition node (10000000,10000000,10000000)
                         return node
         execute (FrameworksMoment (createNode ubs)  <$ createOnE)
@@ -319,10 +320,13 @@ getDelayedB :: Frameworks t =>  HookedBogreSystem t -> Behavior t Vec3 -> Float 
 getDelayedB bs velocityB delay = do
         dynVelBs <- getWithInitDynamicDelayedPositionBs bs velocityB [(delay, ())] never
         return $ (fst . head) <$> dynVelBs where
+        
+getTimeB :: Frameworks t => HookedBogreSystem t -> Moment t (Behavior t Float)
+getTimeB bs = return $ stepper 0 (frameT <$> (frameE bs))
 
 
 -- | get the KeyState changes (Up and Down) Event for a single key. 
-getKeyStateE ::Frameworks t => HookedBogreSystem t -> KeyCode -> Moment t (Event t KeyState)
+getKeyStateE :: Frameworks t => HookedBogreSystem t -> KeyCode -> Moment t (Event t KeyState)
 getKeyStateE bs key = do
         let allKeyPressE = keysPressE bs
         -- convert to Mouse state (now we have runs of Ups and Downs)
@@ -345,5 +349,8 @@ getKeyUpE bs key = do
         ksE <- getKeyStateE bs key
         return $ filterE (== Up) ksE
         
+addEntity :: Frameworks t => HookedBogreSystem t -> String -> IO (SceneNode)
+addEntity bs meshFileName = fmap snd (OGRE.addEntity (displaySystem bs) meshFileName)
+
 
         

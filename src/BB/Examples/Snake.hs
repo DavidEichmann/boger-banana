@@ -8,7 +8,7 @@ import Graphics.Ogre.HOgre
 import Graphics.Ogre.Types
 import OIS.Types
 
-import Reactive.Banana.OGRE
+import Reactive.Banana.OGRE hiding (addEntity)
 import Reactive.Banana.OIS
 import Reactive.Banana.BOGRE
 
@@ -38,7 +38,7 @@ myGame bs smgr = do
         posB <- getMousePosB bs
 
         -- initial head
-        (_,node0) <- liftIO $ addEntity (displaySystem bs) "ogrehead.mesh"
+        node0 <- liftIO $ addEntity bs "ogrehead.mesh"
         setPosB bs node0 posB
         
         -- dynamically add heads

@@ -14,8 +14,8 @@ library
                    hois,
                    monad-control,
                    hogre
-  ghc-options:     -Wall -XImpredicativeTypes
-  extensions: 	   ForeignFunctionInterface 
+  ghc-options:     -Wall
+  extensions: 	   ForeignFunctionInterface ImpredicativeTypes
   extra-libraries: stdc++
   C-sources: 	   ./src/Workarounds/cbits/Workarounds.cpp
   include-dirs:	   ./src/Workarounds/cpp/
