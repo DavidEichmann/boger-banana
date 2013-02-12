@@ -5,9 +5,13 @@ module BB.Util.Vec (
         to,
         dot,
         norm,
+        dist,
+        sqrNorm,
+        sqrDist,
         unit,
         vecSum
 ) where
+
 
 type Vec3 = (Float, Float, Float)
 
@@ -42,8 +46,22 @@ to a b = impose (-) b a
 dot :: Vec3 -> Vec3 -> Float
 dot a b = sum3 (impose (*) a b)
 
+sqrDist :: Vec3 -> Vec3 -> Float
+sqrDist a b = sqrNorm (a `to` b)
+
+dist :: Vec3 -> Vec3 -> Float
+dist a b = sqrt (sqrDist a b)
+
+sqrNorm :: Vec3 -> Float
+sqrNorm v = v `dot` v
+
 norm :: Vec3 -> Float
-norm v = sqrt (v `dot` v) 
+norm = sqrt . sqrNorm 
 
 unit :: Vec3 -> Vec3
-unit v = scale (1/(norm v)) v 
+unit v = scale (1/(norm v)) v
+
+        
+        
+        
+        

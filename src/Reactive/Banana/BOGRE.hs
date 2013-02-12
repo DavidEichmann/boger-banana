@@ -19,6 +19,9 @@ import BB.Workarounds
 
 import BB.Util.Vec
 
+import System.Random
+import Data.Maybe
+
 
 
 -- types
@@ -136,18 +139,14 @@ hookBogerSystem (ds,is) frameAddHandler updateWorldAddHandler = do
 getPositionB :: Frameworks t => SceneNode -> Moment t (Behavior t Vec3)
 getPositionB n = fromPoll $ getPosition n
 
-getMousePosB :: Frameworks t => HookedBogreSystem t ->  Moment t (Behavior t Vec3)
-getMousePosB bs = do
-        velB <- getMouseVelocityB bs
-        return $ velocityToPositionB bs (0,0,0) velB
+getMousePosB :: Frameworks t => HookedBogreSystem t ->  Behavior t Vec3
+getMousePosB bs = velocityToPositionB bs (0,0,0) (getMouseVelocityB bs)
 
-getMouseVelocityB :: Frameworks t => HookedBogreSystem t ->  Moment t (Behavior t Vec3)
-getMouseVelocityB bs = do
-        let mouseE = mouseMoveE bs
-        let vel = stepper (0,0,0) (mouseMoveToVelocity <$> mouseE) where
-                sensitivity = 20
-                mouseMoveToVelocity (x,y) = scale sensitivity (fromIntegral x, negate (fromIntegral  y), 0)
-        return vel
+getMouseVelocityB :: Frameworks t => HookedBogreSystem t ->  Behavior t Vec3
+getMouseVelocityB bs = stepper (0,0,0) (mouseMoveToVelocity <$> mouseE) where
+        sensitivity = 20
+        mouseE = mouseMoveE bs
+        mouseMoveToVelocity (x,y) = scale sensitivity (fromIntegral x, negate (fromIntegral  y), 0)
         
 {-
         DYNAMIC FUNCTIONS THAT HANDLE DYNAMICALLY CREATED NODES
@@ -321,36 +320,58 @@ getDelayedB bs velocityB delay = do
         dynVelBs <- getWithInitDynamicDelayedPositionBs bs velocityB [(delay, ())] never
         return $ (fst . head) <$> dynVelBs where
         
-getTimeB :: Frameworks t => HookedBogreSystem t -> Moment t (Behavior t Float)
-getTimeB bs = return $ stepper 0 (frameT <$> (frameE bs))
+getTimeB :: Frameworks t => HookedBogreSystem t -> Behavior t Float
+getTimeB bs = stepper 0 (frameT <$> (frameE bs))
 
 
 -- | get the KeyState changes (Up and Down) Event for a single key. 
-getKeyStateE :: Frameworks t => HookedBogreSystem t -> KeyCode -> Moment t (Event t KeyState)
-getKeyStateE bs key = do
-        let allKeyPressE = keysPressE bs
+getKeyStateE :: Frameworks t => HookedBogreSystem t -> KeyCode -> Event t KeyState
+getKeyStateE bs key = removeDuplicates myKeyStatesE where
+        allKeyPressE = keysPressE bs
         -- convert to Mouse state (now we have runs of Ups and Downs)
-        let myKeyStatesE = toMouseState <$> allKeyPressE  where
+        myKeyStatesE = toMouseState <$> allKeyPressE  where
                 toMouseState keysDown | elem key keysDown       = Down
                                       | otherwise               = Up
-                                      
-        let zipedMyKeyStatesE = accumE (Up,Up) ((\curr (prev,_) -> (curr, prev)) <$> myKeyStatesE)
-        let myKeyStateChangesE = fst <$> (filterE (uncurry (/=)) zipedMyKeyStatesE)
-        return myKeyStateChangesE
-        
 
-getKeyDownE :: Frameworks t => HookedBogreSystem t -> KeyCode -> Moment t (Event t KeyState)
-getKeyDownE bs key = do
-        ksE <- getKeyStateE bs key
-        return $ filterE (== Down) ksE
+getKeyDownE :: Frameworks t => HookedBogreSystem t -> KeyCode -> Event t KeyState
+getKeyDownE bs key = filterE (== Down) (getKeyStateE bs key)
                 
-getKeyUpE :: Frameworks t => HookedBogreSystem t -> KeyCode -> Moment t (Event t KeyState)
-getKeyUpE bs key = do
-        ksE <- getKeyStateE bs key
-        return $ filterE (== Up) ksE
+getKeyUpE :: Frameworks t => HookedBogreSystem t -> KeyCode -> Event t KeyState
+getKeyUpE bs key = filterE (== Up) (getKeyStateE bs key)
         
 addEntity :: Frameworks t => HookedBogreSystem t -> String -> IO (SceneNode)
 addEntity bs meshFileName = fmap snd (OGRE.addEntity (displaySystem bs) meshFileName)
+
+getRandomB :: (Frameworks t, Random a) => Moment t (Behavior t a)
+getRandomB = fromPoll randomIO
+
+getRandomVec3B :: Frameworks t => Moment t (Behavior t Vec3)
+getRandomVec3B = do
+        xB <- getRandomB
+        yB <- getRandomB
+        zB <- getRandomB
+        let xyzB = (\x y z -> (x,y,z)) <$> xB <*> yB <*> zB
+        return xyzB
+    
+-- Checks for collisions at each frame and fires an event when they colide. The 2 position behaviours must move appart before
+-- a subsequent event is fired (if object colide and stay colidded, only one event will be fired)    
+sphereCollisionsE :: Frameworks t => HookedBogreSystem t -> Float -> Behavior t Vec3 -> Behavior t Vec3  -> Event t ()
+sphereCollisionsE bs radius posAB posBB = collisionE where
+        collisionE = () <$ (filterE (==True) (removeDuplicates (isCollidedB <@ fE)))
+        fE = frameE bs
+        isCollidedB = (<= sqrRadius) <$> (sqrDistB)
+        sqrDistB = sqrDist <$> posAB <*> posBB
+        sqrRadius = radius**2
+
+
+removeDuplicates :: (Frameworks t, Eq a) => Event t a -> Event t a
+removeDuplicates e = dubE where
+        dubE = (fromJust . fst) <$> (filterE (uncurry (/=)) prevZip)
+        prevZip = accumE (Nothing,Nothing) ((\curr (prev,_) -> (Just curr, prev)) <$> e)
+
+
+
+
 
 
         

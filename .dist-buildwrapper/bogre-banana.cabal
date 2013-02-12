@@ -10,6 +10,7 @@ library
   hs-source-dirs:  src
   build-depends:   
                    base >= 4,
+                   random,
                    reactive-banana >= 0.7.1.0,
                    hois,
                    monad-control,
@@ -25,9 +26,10 @@ executable bogre-banana
   main-is:         Main.hs
   build-depends:   
                    base >= 4,
+                   random,
                    X11,
                    hois,
-                   hogre,
+                   hogre
   ghc-options:     -Wall
   extensions: 	   ForeignFunctionInterface ImpredicativeTypes
   C-sources: 	   ./src/Workarounds/cbits/Workarounds.cpp
