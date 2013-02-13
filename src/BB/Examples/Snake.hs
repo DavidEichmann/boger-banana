@@ -8,8 +8,6 @@ import Graphics.Ogre.HOgre
 import Graphics.Ogre.Types
 import OIS.Types
 
-import Reactive.Banana.OGRE hiding (addEntity)
-import Reactive.Banana.OIS
 import Reactive.Banana.BOGRE
 
 import BB.Util.Vec
@@ -45,8 +43,8 @@ myGame bs smgr = do
         (head0, target)<- liftIO $ initWorld bs smgr
         
         -- keyboard control
-        let velMag = 20
-        let velB = stepper (0,0,0) ((scale 100) <$> (
+        let speed = 200
+        let velB = stepper (0,0,0) ((scale speed) <$> (
                         ((0,1,0)  <$ (getKeyDownE bs KC_UP))         `union`
                         ((0,-1,0) <$ (getKeyDownE bs KC_DOWN))       `union`
                         ((-1,0,0) <$ (getKeyDownE bs KC_LEFT))       `union`
@@ -59,14 +57,16 @@ myGame bs smgr = do
         
         -- random bounded positions for target
         randomVec3 <- getRandomVec3B
-        let randomTargetPosB = (scale boxHalfWidth) <$> randomVec3 where
-                boxHalfWidth = 200
+        let randomTargetPosB = ((sub (boxWidthH,boxWidthH,boxWidthH)) . (scale boxWidth)) <$> randomVec3 where
+                boxWidthH = 150
+                boxWidth = 2*boxWidthH
+                
         
         -- target position changes on collision
         initTargetPos <- initial randomTargetPosB
         let
+                targetHitE = getKeyDownE bs KC_SPACE --sphereCollisionsE bs 40 head0PosB targetPosB
                 targetPosB = stepper initTargetPos (randomTargetPosB <@ targetHitE) where
-                targetHitE = sphereCollisionsE bs 40 head0PosB targetPosB
         setPosB bs target targetPosB
         
         reactimate $ (putStrLn "hit!") <$ targetHitE
@@ -74,9 +74,8 @@ myGame bs smgr = do
         -- dynamically add heads
         newHeadE <- createNodeOnE bs targetHitE
         -- delay heads
-        let lastHead = stepper head0 newHeadE
         let headCountB = accumB 1 ((+1) <$ newHeadE)
-        let headsDelaysE = (((,) . (*0.6))  <$> headCountB) <@> newHeadE
+        let headsDelaysE = (((,) . (*0.2))  <$> headCountB) <@> newHeadE
         delayedB <- getDynamicDelayedPositionBs bs head0PosB headsDelaysE
         setDynamicPositions bs delayedB
         

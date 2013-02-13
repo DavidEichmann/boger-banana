@@ -7,8 +7,8 @@ import BB.Examples.HogreHois01
 import BB.Examples.HogreHois02
 import BB.Examples.HogreHois03
 import BB.Examples.HogreHois04
-import BB.Examples.HogreHois05
 -}
+import BB.Examples.HogreHois05
 import BB.Examples.Snake
 import qualified  BB.Tutorials.Tutorial01 as Tut01 
 
@@ -17,6 +17,7 @@ import BB.Workarounds
 
 main::IO()
 main = do
+        --hogreHois05
         snake
         --Tut01.main
         

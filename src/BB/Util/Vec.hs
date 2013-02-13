@@ -2,6 +2,7 @@ module BB.Util.Vec (
         Vec3,
         scale,
         add,
+        sub,
         to,
         dot,
         norm,
@@ -42,6 +43,9 @@ vecSum = foldr add zero
 
 to :: Vec3 -> Vec3 -> Vec3
 to a b = impose (-) b a
+
+sub :: Vec3 -> Vec3 -> Vec3
+sub = flip to
 
 dot :: Vec3 -> Vec3 -> Float
 dot a b = sum3 (impose (*) a b)

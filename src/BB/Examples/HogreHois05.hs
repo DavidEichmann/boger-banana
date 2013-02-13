@@ -8,58 +8,49 @@ import Graphics.Ogre.HOgre
 import Graphics.Ogre.Types
 import OIS.Types
 
-
-import Reactive.Banana.OGRE
+import Reactive.Banana.OGRE hiding (addEntity)
 import Reactive.Banana.OIS
 import Reactive.Banana.BOGRE
 
 import BB.Util.Vec
 
 
-
+-- based on basic tutorial 6 from Ogre Wiki.
+-- http://www.ogre3d.org/tikiwiki/Basic+Tutorial+6&structure=Tutorials
 
 hogreHois05 :: IO ()
-hogreHois05 = runGame gameBuilder
-
-
+hogreHois05 = runGame myGame
 
 -- init the world and return the FRP network
-gameBuilder :: GameBuilder
-gameBuilder bs@(ds,_) smgr = do
+initWorld :: Frameworks t => HookedBogreSystem t -> SceneManager -> IO (SceneNode)
+initWorld bs smgr = do
         -- create a light
         l <- sceneManager_createLight_SceneManagerPcharP smgr "MainLight"
-        light_setPosition_LightPfloatfloatfloat l 20 80 50
+        light_setPosition_LightPfloatfloatfloat l 0 0 500
         
-        -- load oger heads
-        (_, headNode1) <- addEntity ds "ogrehead.mesh"
-        (_, headNode2) <- addEntity ds "ogrehead.mesh"
+        -- default camera
+        cam <- sceneManager_getCamera smgr "PlayerCam"
+        camera_setPosition_CameraPfloatfloatfloat cam 0 0 1000
         
-        -- create FRP network
-        compile (network bs (headNode1, headNode2))
+        -- create ogre head
+        ogre <- liftIO $ addEntity bs "ogrehead.mesh"
+        
+        return (ogre)
 
 
+myGame :: Frameworks t => GameBuilder t
+myGame bs smgr = do
+        -- initialize the world (and ogre)
+        ogreaHead <- liftIO $ initWorld bs smgr
+ 
+        -- get the mouse position Behavior :: Behavior t Vec3
+        let posB = getMousePosB bs
+ 
+        -- set ogre head position to mouse position Behavior
+        setPosB bs ogreaHead posB
 
-network :: Frameworks t => BogreSystem -> (SceneNode,SceneNode) -> Moment t ()
-network ubs (node1,node2) = do
-        -- hook
-        bs <- hookBogerSystem ubs
-        
-        -- Mouse input (as a velocity Behaviour)
-        mouseVelB <- getMouseVelocityB bs
-        
-        -- set node1 velocity to mouse velocity
-        setVelocityB bs node1 mouseVelB
-        
-        --deVelB <- getDelayedVelocityB bs mouseVelB 4
-        --setVelocityB bs node2 deVelB
-        
-        -- stop on escape key
-        escE <- getKeyDownE bs KC_ESCAPE
-        reactimate $ (stopBogre bs) <$ escE
+        return ()
 
         
-        --dtE <- getFrameEvent (fst bs)
-        --let posE = accumE (0,0,0) (add <$> (((flip scale) <$> mouseVelB) <@> dtE))
-        --reactimate $ (setPosition node1) <$> posE
         
         
