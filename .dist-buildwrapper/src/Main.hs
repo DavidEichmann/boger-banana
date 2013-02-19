@@ -18,7 +18,7 @@ import BB.Workarounds
 main::IO()
 main = do
         --hogreHois05
-        snake
-        --Tut01.main
+        --snake
+        Tut01.main
         
         
