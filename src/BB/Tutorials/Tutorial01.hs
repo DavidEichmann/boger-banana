@@ -34,10 +34,10 @@ myGame bs smgr = do
         ogreaHead <- liftIO $ initWorld bs smgr
  
         -- get the mouse position Behavior :: Behavior t Vec3
-        let posB = getMousePosB bs
+        let posB = getMouseVelB bs
  
         -- set the position of the ogre head to the mouse position Behavior
-        setPosB bs ogreaHead posB
+        setVelB bs ogreaHead posB
  
         -- get the escape key event :: Event t KeyState
         let escE = getKeyDownE bs KC_ESCAPE

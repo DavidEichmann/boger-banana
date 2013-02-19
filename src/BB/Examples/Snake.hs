@@ -65,7 +65,7 @@ myGame bs smgr = do
         -- target position changes on collision
         initTargetPos <- initial randomTargetPosB
         let
-                targetHitE = getKeyDownE bs KC_SPACE --sphereCollisionsE bs 40 head0PosB targetPosB
+                targetHitE = sphereCollisionsE bs 40 head0PosB targetPosB
                 targetPosB = stepper initTargetPos (randomTargetPosB <@ targetHitE) where
         setPosB bs target targetPosB
         
@@ -76,8 +76,8 @@ myGame bs smgr = do
         -- delay heads
         let headCountB = accumB 1 ((+1) <$ newHeadE)
         let headsDelaysE = (((,) . (*0.2))  <$> headCountB) <@> newHeadE
-        delayedB <- getDynamicDelayedPositionBs bs head0PosB headsDelaysE
-        setDynamicPositions bs delayedB
+        delayedB <- getDynamicDelayedPosBs bs head0PosB headsDelaysE
+        setDynamicPositionBs bs delayedB
         
         -- stop on escape key
         let escE = getKeyDownE bs KC_ESCAPE

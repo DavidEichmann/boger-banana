@@ -20,6 +20,11 @@ library
   extra-libraries: stdc++
   C-sources: 	   ./src/Workarounds/cbits/Workarounds.cpp
   include-dirs:	   ./src/Workarounds/cpp/
+  Exposed-modules:
+                   BB.Util.Vec
+                   Reactive.Banana.BOGRE
+                   Reactive.Banana.OIS
+                   Reactive.Banana.OGRE
 
 executable bogre-banana
   hs-source-dirs:  src
