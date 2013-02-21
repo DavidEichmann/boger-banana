@@ -26,26 +26,38 @@ initWorld bs smgr = do
         -- load oger head
         ogreHead <- addEntity bs "ogrehead.mesh"
         return ogreHead
- 
+        
+--addHead :: Frameworks t => HookedBogreSystem t -> IO (SceneNode)
+--addHead  bs = do
+--        ogreHeadTwo <- addEntity bs "ogrehead.mesh"
+--        return ogreHeadTwo
  
 myGame :: Frameworks t => GameBuilder t
 myGame bs smgr = do
         -- initialize the world
         ogreaHead <- liftIO $ initWorld bs smgr
  
-        -- get the mouse position Behavior :: Behavior t Vec3
-        let posB = getMouseVelB bs
+        --liftIO $  putStrLn "Hello World!"
  
-        -- set the position of the ogre head to the mouse position Behavior
-        setVelB bs ogreaHead posB
+        -- get the BogerFrame Event :: Event t BogreFrame
+        let fE = frameE bs
  
-        -- get the escape key event :: Event t KeyState
-        let escE = getKeyDownE bs KC_ESCAPE
+        -- transform to the time :: Event t Float
+        let frameTimeE = frameT <$> fE
  
-        -- replace each event with stopBogre
-        let stopGameIOE = (stopBogre bs) <$ escE
+        --let printTimeIOE = print <$> frameTimeE
  
-        -- do the IO actions when they occur
-        reactimate stopGameIOE
+        --reactimate printTimeIOE
+ 
+        -- transform to a Behavior :: Behavior t Float
+        let timeB = stepper 0 frameTimeE
+ 
+        -- transform to a position Behavior :: Behavior t Vec3
+        --let posB = (\time -> scale 50 (sin time, cos time, 0)) <$> timeB
+ 
+        let posB = getMousePosB bs
+ 
+        -- set the position of the ogre head to the position Behavior
+        setPosB bs ogreaHead posB
  
         return ()

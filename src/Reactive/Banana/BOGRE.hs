@@ -14,6 +14,9 @@ module Reactive.Banana.BOGRE (
         setVelB,
         
         getPositionB,
+        
+        frameE,
+        frameT,
 
         addEntity,
         createNodeOnE,
