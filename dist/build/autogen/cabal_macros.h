@@ -7,12 +7,12 @@
   (major1) == 1 && (major2) <  5 || \
   (major1) == 1 && (major2) == 5 && (minor) <= 0)
 
-/* package base-4.5.0.0 */
-#define VERSION_base "4.5.0.0"
+/* package base-4.5.1.0 */
+#define VERSION_base "4.5.1.0"
 #define MIN_VERSION_base(major1,major2,minor) (\
   (major1) <  4 || \
   (major1) == 4 && (major2) <  5 || \
-  (major1) == 4 && (major2) == 5 && (minor) <= 0)
+  (major1) == 4 && (major2) == 5 && (minor) <= 1)
 
 /* package hogre-0.1.5 */
 #define VERSION_hogre "0.1.5"
@@ -42,8 +42,8 @@
   (major1) == 1 && (major2) <  0 || \
   (major1) == 1 && (major2) == 0 && (minor) <= 1)
 
-/* package reactive-banana-0.7.1.0 */
-#define VERSION_reactive_banana "0.7.1.0"
+/* package reactive-banana-0.7.1.1 */
+#define VERSION_reactive_banana "0.7.1.1"
 #define MIN_VERSION_reactive_banana(major1,major2,minor) (\
   (major1) <  0 || \
   (major1) == 0 && (major2) <  7 || \
