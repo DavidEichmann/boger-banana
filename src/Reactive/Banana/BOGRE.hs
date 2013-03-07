@@ -27,6 +27,7 @@ module Reactive.Banana.BOGRE (
 
         getMousePosB,
         getMouseVelB,
+        getKeyStateE,
         getKeyDownE,
         getKeyUpE,
         getTimeB,
