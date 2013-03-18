@@ -23,6 +23,7 @@ module Reactive.Banana.BOGRE (
         
         getDynamicDelayedPosBs,
         setDynamicPositionBs,
+        setDynamicVelBs,
         sphereCollisionsE,
 
         getMousePosB,
