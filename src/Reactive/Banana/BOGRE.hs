@@ -21,6 +21,7 @@ module Reactive.Banana.BOGRE (
         addEntity,
         createNodeOnE,
         
+        getDelayedPosB,
         getDynamicDelayedPosBs,
         setDynamicPositionBs,
         setDynamicVelBs,
