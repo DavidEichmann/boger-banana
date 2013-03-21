@@ -381,13 +381,13 @@ getWithInitDynamicDelayedPositionBs bs masterB initDelaysTaggeed delayTaggedE = 
                         (addDelay       <$>  delayTaggedE) `union`
                         (updateFrame    <$>  fE) `union` 
                         (addToHistory   <$>  masterChangeE) `union` -- use previouse time as that is when the behaviour started (at the start of this frame)
-                        (stepFrame      <$   masterChangeE)
+                        (stepFrame      <$   fE)
                 ))
         let delayedB = getDelayedVals <$> stepsB
         return delayedB
 
 
--- |Converts a velocity to position 'Behavior'. Note that the velocity is simple sampled at the end of each frame, so if the velocity
+-- |Converts a velocity to position 'Behavior'. Note that the velocity is simply sampled at the end of each frame, so if the velocity
 -- changes many times in a frame, or was not valid for the duration of that frame, then the resulting posiiton may be inacurate.
 velocityToPositionB :: Frameworks t => HookedBogreSystem t -> Vec3 -> Behavior t Vec3 -> Behavior t Vec3
 velocityToPositionB bs initPos vel = accumB initPos (add <$> dPosE) where
