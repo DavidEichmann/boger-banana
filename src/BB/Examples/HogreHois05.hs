@@ -21,7 +21,7 @@ import BB.Util.Vec
 hogreHois05 :: IO ()
 hogreHois05 = runGame myGame
 
--- init the world and return the FRP network
+-- init the world and return an ogre head node
 initWorld :: Frameworks t => HookedBogreSystem t -> SceneManager -> IO (SceneNode)
 initWorld bs smgr = do
         -- create a light
