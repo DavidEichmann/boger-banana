@@ -1,7 +1,7 @@
 #ifndef CGEN_WORKAROUNDS_H
 #define CGEN_WORKAROUNDS_H
 
-#include <Workarounds.h>
+#include "../cpp/Workarounds.h"
 
 extern "C"
 {

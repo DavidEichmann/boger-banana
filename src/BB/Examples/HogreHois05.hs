@@ -47,7 +47,6 @@ myGame bs smgr = do
         let posB = getMousePosB bs
  
         -- set ogre head position to mouse position Behavior
-
         setPosB bs ogreaHead posB
 
         

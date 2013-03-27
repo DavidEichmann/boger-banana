@@ -1,26 +1,20 @@
 name:           bogre-banana
-
-description:	Boge-Banana is a 3D game engine using Reactive-Banana FRP library, the HOIS library for input, and the HOGRE library for output. An introductory tutorial is avilable at http://www.haskell.org/haskellwiki/User_talk:DavidE.  
-
+description:	Boge-Banana is a 3D game engine using the Reactive-Banana FRP library, the HOIS library for input, and the HOGRE library for output. An introductory tutorial is avilable at http:\/\/www.haskell.org\/haskellwiki\/User_talk:DavidE.
 category:		Game Engine
-
-source-repository head
-  type:     	git
-  location:		git://
-
-license:		GPL3
+license:		BSD3
+license-file:	LICENSE
 version:        0.0.1
 cabal-version:	>= 1.4
 build-type:     Simple
-Maintainer:		David Eichmann
+Maintainer:		EichmannD at gmail dot com
 author:         David Eichmann
 copyright:      David Michael Taro Eichmann
-build-type:          Simple
 
 library
   hs-source-dirs:  src
   build-depends:   
                    base >= 4,
+                   base < 5,
                    random,
                    reactive-banana >= 0.7.1.0,
                    hois,
@@ -29,8 +23,7 @@ library
   ghc-options:     -Wall
   extensions: 	   ForeignFunctionInterface ImpredicativeTypes
   extra-libraries: stdc++
-  C-sources: 	   ./src/Workarounds/cbits/Workarounds.cpp
-  include-dirs:	   ./src/Workarounds/cpp/
+  C-sources:       src/Workarounds/cbits/Workarounds.cpp
   Exposed-modules:
                    BB.Util.Vec
                    Reactive.Banana.BOGRE
@@ -43,11 +36,9 @@ executable bogre-banana
   build-depends:   
                    base >= 4,
                    random,
-                   X11,
                    hois,
                    hogre
   ghc-options:     -Wall
   extensions: 	   ForeignFunctionInterface ImpredicativeTypes
   C-sources: 	   ./src/Workarounds/cbits/Workarounds.cpp
-  include-dirs:	   ./src/Workarounds/cpp/
 
