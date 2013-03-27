@@ -8,8 +8,8 @@ import Graphics.Ogre.HOgre
 import Graphics.Ogre.Types
 import OIS.Types
 
-import Reactive.Banana.OGRE hiding (addEntity)
-import Reactive.Banana.OIS
+import Reactive.Banana.BOGRE.OGRE hiding (addEntity)
+import Reactive.Banana.BOGRE.OIS
 import Reactive.Banana.BOGRE
 
 import BB.Util.Vec
@@ -47,9 +47,8 @@ myGame bs smgr = do
         let posB = getMousePosB bs
  
         -- set ogre head position to mouse position Behavior
-        setPosB bs ogreaHead posB
 
-        return ()
+        setPosB bs ogreaHead posB
 
         
         

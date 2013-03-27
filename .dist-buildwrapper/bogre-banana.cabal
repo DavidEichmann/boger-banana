@@ -1,8 +1,9 @@
 name:           bogre-banana
-version:        0.1
+version:        0.0.1
 cabal-version:  >= 1.2
 build-type:     Simple
-author:         david
+Maintainer:		David Eichmann
+author:         David Eichmann
 copyright:      David Michael Taro Eichmann
 build-type:          Simple
 
@@ -23,8 +24,8 @@ library
   Exposed-modules:
                    BB.Util.Vec
                    Reactive.Banana.BOGRE
-                   Reactive.Banana.OIS
-                   Reactive.Banana.OGRE
+                   Reactive.Banana.BOGRE.OIS
+                   Reactive.Banana.BOGRE.OGRE
 
 executable bogre-banana
   hs-source-dirs:  src

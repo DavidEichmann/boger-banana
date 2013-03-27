@@ -7,7 +7,7 @@ import Graphics.Ogre.HOgre
 import Graphics.Ogre.Types
 
 import Reactive.Banana.Frameworks
-import Reactive.Banana.OGRE
+import Reactive.Banana.BOGRE.OGRE
 
 import BB.Util.Vec
 

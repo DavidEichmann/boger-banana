@@ -46,7 +46,7 @@ myGame bs smgr = do
         let frameTimeE = frameT <$> fE
  
         -- transform to a Behavior :: Behavior t Float
-        let timeB = stepper 0 frameTimeE
+        let timeB = getTimeB bs
  
         -- transform to a position Behavior :: Behavior t Vec3
         let posCircle = (\time -> scale 50 (sin (time*10), cos (time*10), 0)) <$> timeB
@@ -74,6 +74,14 @@ myGame bs smgr = do
  
         -- do the IO actions when they occur
         reactimate stopGameIOE
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
  
         return ()
  

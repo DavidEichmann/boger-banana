@@ -7,7 +7,7 @@ import Graphics.X11.Xlib
 
 import Reactive.Banana
 import Reactive.Banana.Frameworks
-import Reactive.Banana.OIS
+import Reactive.Banana.BOGRE.OIS
 
 -- Create a window and return the Int handle
 createDummyWindow :: IO Int

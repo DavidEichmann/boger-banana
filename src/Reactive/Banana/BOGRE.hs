@@ -45,9 +45,9 @@ module Reactive.Banana.BOGRE (
 
 import Reactive.Banana
 import Reactive.Banana.Frameworks
-import Reactive.Banana.OIS
-import Reactive.Banana.OGRE hiding (addEntity)
-import qualified Reactive.Banana.OGRE as OGRE
+import Reactive.Banana.BOGRE.OIS
+import Reactive.Banana.BOGRE.OGRE hiding (addEntity)
+import qualified Reactive.Banana.BOGRE.OGRE as OGRE
 
 import Graphics.Ogre.HOgre
 import Graphics.Ogre.Types

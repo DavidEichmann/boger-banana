@@ -1,8 +1,19 @@
 name:           bogre-banana
-version:        0.1
-cabal-version:  >= 1.2
+
+description:	Boge-Banana is a 3D game engine using Reactive-Banana FRP library, the HOIS library for input, and the HOGRE library for output. An introductory tutorial is avilable at http://www.haskell.org/haskellwiki/User_talk:DavidE.  
+
+category:		Game Engine
+
+source-repository head
+  type:     	git
+  location:		git://
+
+license:		GPL3
+version:        0.0.1
+cabal-version:	>= 1.4
 build-type:     Simple
-author:         david
+Maintainer:		David Eichmann
+author:         David Eichmann
 copyright:      David Michael Taro Eichmann
 build-type:          Simple
 
@@ -23,8 +34,8 @@ library
   Exposed-modules:
                    BB.Util.Vec
                    Reactive.Banana.BOGRE
-                   Reactive.Banana.OIS
-                   Reactive.Banana.OGRE
+                   Reactive.Banana.BOGRE.OIS
+                   Reactive.Banana.BOGRE.OGRE
 
 executable bogre-banana
   hs-source-dirs:  src

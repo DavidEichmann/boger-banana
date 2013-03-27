@@ -1,7 +1,7 @@
 --
 -- Insert Documentation here :-)
 --
-module Reactive.Banana.OIS (
+module Reactive.Banana.BOGRE.OIS (
         InputSystem,
         createInputSystem,
         getKeysPressE,

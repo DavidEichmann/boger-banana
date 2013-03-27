@@ -10,8 +10,8 @@ import OIS.Types
 
 import Reactive.Banana.Combinators
 
-import Reactive.Banana.OGRE
-import Reactive.Banana.OIS
+import Reactive.Banana.BOGRE.OGRE
+import Reactive.Banana.BOGRE.OIS
 import Reactive.Banana.BOGRE
 
 import BB.Workarounds

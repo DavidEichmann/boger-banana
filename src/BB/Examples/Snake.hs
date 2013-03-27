@@ -65,7 +65,7 @@ myGame bs smgr = do
         -- target position changes on collision
         initTargetPos <- initial randomTargetPosB
         let
-                targetHitE = sphereCollisionsE bs 40 head0PosB targetPosB
+                targetHitE = (getKeyDownE bs KC_B) --sphereCollisionsE bs 40 head0PosB targetPosB
                 targetPosB = stepper initTargetPos (randomTargetPosB <@ targetHitE) where
         setPosB bs target targetPosB
         
