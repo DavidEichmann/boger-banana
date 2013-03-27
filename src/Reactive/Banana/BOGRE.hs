@@ -460,13 +460,17 @@ getRandomVec3B = do
     
 -- |Checks for collisions at each frame and fires an event when they colide. The 2 position behaviours must move appart before
 -- a second event is fired (if the objects colide and stay colidded, only one event will be fired).   
-sphereCollisionsE :: Frameworks t => HookedBogreSystem t -> Float -> Behavior t Vec3 -> Behavior t Vec3  -> Event t ()
-sphereCollisionsE bs radius posAB posBB = collisionE where
-        collisionE = () <$ (filterE (==True) (removeDuplicates (isCollidedB <@ fE)))
-        fE = frameE bs
-        isCollidedB = (<= sqrRadius) <$> (sqrDistB)
-        sqrDistB = sqrDist <$> posAB <*> posBB
-        sqrRadius = radius**2
+sphereCollisionsE :: Frameworks t => HookedBogreSystem t -> Float -> SceneNode -> SceneNode  -> Moment t (Event t ())
+sphereCollisionsE bs radius nodeA nodeB = do
+        posAB <- getPositionB nodeA 
+        posBB <- getPositionB nodeB
+        let
+                collisionE = () <$ (filterE (==True) (removeDuplicates (isCollidedB <@ fE)))
+                fE = frameE bs
+                isCollidedB = (<= sqrRadius) <$> (sqrDistB)
+                sqrDistB = sqrDist <$> posAB <*> posBB
+                sqrRadius = radius**2
+        return collisionE
 
 -- |Filters an 'Event' such that the save event only occurse once. i.e. events [1,1,1,2,2,2,1,1,1,4,5,5,4,5,6] would become [1,2,1,4,5,4,5,6]
 removeDuplicates :: (Frameworks t, Eq a) => Event t a -> Event t a

@@ -13,9 +13,6 @@ import Reactive.Banana.BOGRE
 import BB.Util.Vec
 
 
--- based on basic tutorial 6 from Ogre Wiki.
--- http://www.ogre3d.org/tikiwiki/Basic+Tutorial+6&structure=Tutorials
-
 snake :: IO ()
 snake = runGame myGame
 
@@ -64,9 +61,8 @@ myGame bs smgr = do
         
         -- target position changes on collision
         initTargetPos <- initial randomTargetPosB
-        let
-                targetHitE = sphereCollisionsE bs 40 head0PosB targetPosB
-                targetPosB = stepper initTargetPos (randomTargetPosB <@ targetHitE) where
+        targetHitE <- sphereCollisionsE bs 40 head0 target
+        let targetPosB = stepper initTargetPos (randomTargetPosB <@ targetHitE) where
         setPosB bs target targetPosB
         
         reactimate $ (putStrLn "hit!") <$ targetHitE

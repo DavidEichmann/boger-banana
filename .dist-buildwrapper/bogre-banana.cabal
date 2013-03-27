@@ -6,7 +6,7 @@ license-file:	LICENSE
 version:        0.0.1
 cabal-version:	>= 1.4
 build-type:     Simple
-Maintainer:		EichmannD@gmail.com
+Maintainer:		EichmannD at gmail dot com
 author:         David Eichmann
 copyright:      David Michael Taro Eichmann
 
