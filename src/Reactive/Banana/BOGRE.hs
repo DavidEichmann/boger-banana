@@ -4,7 +4,14 @@ This is a fusion of the OIS and OGRE modules
 module Reactive.Banana.BOGRE (
         
         
-        HookedBogreSystem,
+        HookedBogreSystem(
+                displaySystem,
+                inputSystem,
+                frameE
+        ),
+        BogreFrame(..),
+                frameDt,
+                frameT,
         GameBuilder,
 
         runGame,
@@ -15,9 +22,6 @@ module Reactive.Banana.BOGRE (
         
         getPositionB,
         
-        frameE,
-        frameT,
-
         addEntity,
         createNodeOnE,
         
@@ -460,12 +464,12 @@ getRandomVec3B = do
     
 -- |Checks for collisions at each frame and fires an event when they colide. The 2 position behaviours must move appart before
 -- a second event is fired (if the objects colide and stay colidded, only one event will be fired).   
-sphereCollisionsE :: Frameworks t => HookedBogreSystem t -> Float -> SceneNode -> SceneNode  -> Moment t (Event t ())
+sphereCollisionsE :: Frameworks t => HookedBogreSystem t -> Float -> SceneNode -> SceneNode  -> Moment t (Event t (SceneNode,SceneNode))
 sphereCollisionsE bs radius nodeA nodeB = do
         posAB <- getPositionB nodeA 
         posBB <- getPositionB nodeB
         let
-                collisionE = () <$ (filterE (==True) (removeDuplicates (isCollidedB <@ fE)))
+                collisionE = (nodeA, nodeB) <$ (filterE (==True) (removeDuplicates (isCollidedB <@ fE)))
                 fE = frameE bs
                 isCollidedB = (<= sqrRadius) <$> (sqrDistB)
                 sqrDistB = sqrDist <$> posAB <*> posBB

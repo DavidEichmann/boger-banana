@@ -79,7 +79,6 @@ myGame bs smgr = do
         let escE = getKeyDownE bs KC_ESCAPE
         reactimate $ (stopBogre bs) <$ escE
         return ()
-
         
         
         
