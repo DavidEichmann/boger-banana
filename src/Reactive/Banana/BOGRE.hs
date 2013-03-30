@@ -27,7 +27,7 @@ module Reactive.Banana.BOGRE (
         
         getDelayedPosB,
         getDynamicDelayedPosBs,
-        setDynamicPositionBs,
+        setDynamicPosBs,
         setDynamicVelBs,
         sphereCollisionsE,
 
@@ -242,23 +242,23 @@ getMouseVelB bs = stepper (0,0,0) (frameToVelocity <$> fE) where
 
 -- |Use this to dynamically create new nodes whenever the passed 'Event' occurs. The resulting 'Event' will contain the newly created node.
 -- The value of the passed 'Event' is ignored.
-createNodeOnE :: Frameworks t => HookedBogreSystem t -> Event t a -> Moment t (Event t SceneNode)
+createNodeOnE :: Frameworks t => HookedBogreSystem t -> Event t String -> Moment t (Event t SceneNode)
 createNodeOnE bs createOnE = do
         let ubs = unhookBogerSystem bs
         let
-                createNode :: Frameworks s =>  Moment s (SceneNode)
-                createNode = do
-                        (_,node) <- liftIO $ OGRE.addEntity (fst ubs) "ogrehead.mesh"
+                createNode :: Frameworks s =>  String -> Moment s (SceneNode)
+                createNode mesh = do
+                        (_,node) <- liftIO $ OGRE.addEntity (fst ubs) mesh
                         liftIO $ setPosition node (10000000,10000000,10000000)
                         return node
-        execute (FrameworksMoment (createNode)  <$ createOnE)
+        execute ((\mesh -> FrameworksMoment (createNode mesh))  <$> createOnE)
         
         
 -- |Set the position of a note to match a given 'Behavior t Vec3' at all times.
 setPosB :: Frameworks t => HookedBogreSystem t -> SceneNode -> Behavior t Vec3  -> Moment t ()
 setPosB bs node posB = do
         let dynamicB = ((:[]) . ((flip (,)) node)) <$> posB
-        setDynamicPositionBs bs dynamicB
+        setDynamicPosBs bs dynamicB
 
 -- |Set the velocity of a note to match a given 'Behavior t Vec3' at all times. Not that the velocity 'Behavior' is only sampled
 -- at the end of each frame. 
@@ -288,8 +288,8 @@ setDynamicVelBs bs nodeVelB = do
 
 -- |This will set positions of a variable number of nodes according to a 'Behavior' of a list of node-position pairs. Use this to
 -- set the position of dynamically created nodes. Note that this has a close relation to the output of 'getDynamicDelayedPosBs'
-setDynamicPositionBs :: Frameworks t => HookedBogreSystem t -> Behavior t [(Vec3, SceneNode)]  -> Moment t ()
-setDynamicPositionBs bs nodeVelB = do
+setDynamicPosBs :: Frameworks t => HookedBogreSystem t -> Behavior t [(Vec3, SceneNode)]  -> Moment t ()
+setDynamicPosBs bs nodeVelB = do
         let uwE = _updateWorldE bs
         let sampleE = nodeVelB <@ uwE
         let
@@ -323,9 +323,9 @@ getWithInitDynamicDelayedPositionBs bs masterB initDelaysTaggeed delayTaggedE = 
                 addDelay (newDelay, newTag) (frame, history, maxDelay, delays, tags, delayedVals) = next where
                         next = (frame, history, maxDelay', delays', tags', delayedVals')
                         maxDelay' = max maxDelay newDelay
-                        delays' = newDelay : delays
-                        tags' = newTag : tags
-                        delayedVals' = defaultVal : delayedVals
+                        delays' = delays ++ [newDelay]
+                        tags' = tags ++ [newTag]
+                        delayedVals' = delayedVals ++ [defaultVal]
                 
                 -- whenever there is a change to the master behaviour, add it to the history 
                 --      we assume the behaviour changed at the start of the current frame
@@ -469,8 +469,11 @@ sphereCollisionsE bs radius nodeA nodeB = do
         posAB <- getPositionB nodeA 
         posBB <- getPositionB nodeB
         let
-                collisionE = (nodeA, nodeB) <$ (filterE (==True) (removeDuplicates (isCollidedB <@ fE)))
-                fE = frameE bs
+                collisionE = (nodeA, nodeB) <$ (filterE (\(col,fid) -> col && (fid /= 0)) collideFidE)
+                collideFidE = accumE (False, -1) (collideFidInc <$> collideE)
+                collideFidInc col (_, i) = (col, i+1)
+                collideE = removeDuplicates (isCollidedB <@ uwE)
+                uwE = _updateWorldE bs
                 isCollidedB = (<= sqrRadius) <$> (sqrDistB)
                 sqrDistB = sqrDist <$> posAB <*> posBB
                 sqrRadius = radius**2

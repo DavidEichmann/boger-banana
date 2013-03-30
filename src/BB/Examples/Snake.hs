@@ -65,15 +65,13 @@ myGame bs smgr = do
         let targetPosB = stepper initTargetPos (randomTargetPosB <@ targetHitE) where
         setPosB bs target targetPosB
         
-        reactimate $ (putStrLn "hit!") <$ targetHitE
-        
         -- dynamically add heads
-        newHeadE <- createNodeOnE bs targetHitE
+        newHeadE <- createNodeOnE bs ("cube.mesh" <$ targetHitE)
         -- delay heads
         let headCountB = accumB 1 ((+1) <$ newHeadE)
         let headsDelaysE = (((,) . (*0.2))  <$> headCountB) <@> newHeadE
         delayedB <- getDynamicDelayedPosBs bs head0PosB headsDelaysE
-        setDynamicPositionBs bs delayedB
+        setDynamicPosBs bs delayedB
         
         -- stop on escape key
         let escE = getKeyDownE bs KC_ESCAPE

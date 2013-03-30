@@ -42,8 +42,7 @@ data DisplaySystem = DisplaySystem {
                 sceneManager :: SceneManager
         }
 
--- based on basic tutorial 6 from Ogre Wiki.
--- http://www.ogre3d.org/tikiwiki/Basic+Tutorial+6&structure=Tutorials
+
 createDisplaySystem :: IO(DisplaySystem)
 createDisplaySystem = do
         -- construct Ogre::Root
