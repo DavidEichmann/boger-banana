@@ -46,7 +46,7 @@ myGame bs smgr = do
                         ((0,-1,0) <$ (getKeyDownE bs KC_DOWN))       `union`
                         ((-1,0,0) <$ (getKeyDownE bs KC_LEFT))       `union`
                         ((1,0,0)  <$ (getKeyDownE bs KC_RIGHT))      `union`
-                        ((0,0,-1) <$ (getKeyDownE bs KC_G))           `union`
+                        ((0,0,-1) <$ (getKeyDownE bs KC_G))          `union`
                         ((0,0,1)  <$ (getKeyDownE bs KC_B))
                 ))
         let head0PosB = velocityToPositionB bs (0,0,0) velB
@@ -66,7 +66,7 @@ myGame bs smgr = do
         setPosB bs target targetPosB
         
         -- dynamically add heads
-        newHeadE <- createNodeOnE bs ("cube.mesh" <$ targetHitE)
+        newHeadE <- createNodeOnE bs ("ogrehead.mesh" <$ targetHitE)
         -- delay heads
         let headCountB = accumB 1 ((+1) <$ newHeadE)
         let headsDelaysE = (((,) . (*0.2))  <$> headCountB) <@> newHeadE

@@ -64,10 +64,10 @@ import Data.Maybe
 
 
 
--- |The tuple of the OGER display system and OIS inputsystem
+-- |The tuple of the OGRE display system and OIS inputsystem
 type BogreSystem = (DisplaySystem, InputSystem)
 
--- |An up and running boher system. This should only be used internally other than perhaps for accessing the frameE
+-- |An up-and-running Bogre system. This should only be used internally other than perhaps for accessing the frame Event (frameE).
 data Frameworks t => HookedBogreSystem t = HookedBogreSystem {
         displaySystem  :: DisplaySystem,
         inputSystem    :: InputSystem,
@@ -114,10 +114,10 @@ nullFrame = BogreFrame {
         frameKeysPress = []
 }
 
--- |All games should be described in a function of this type
+-- |All games should be described in a function of this type.
 type GameBuilder t = HookedBogreSystem t -> SceneManager -> Moment t ()
 
--- |Given a 'GameBuilder', this will setup the Boger system and run the game
+-- |Given a 'GameBuilder', this will setup the Bogre system and run the game
 runGame :: (forall t. Frameworks t => GameBuilder t) -> IO ()
 runGame gameBuilder = do
         -- init the display system
@@ -142,7 +142,7 @@ runGame gameBuilder = do
         
         let
                 frameworkNetwork bs = do
-                        hookedBogreSystem <- hookBogerSystem bs frameAddHandler updateWorldAddHandler 
+                        hookedBogreSystem <- hookBogreSystem bs frameAddHandler updateWorldAddHandler 
                         gameBuilder hookedBogreSystem smgr
                         
                         
@@ -152,7 +152,7 @@ runGame gameBuilder = do
         -- A proper mechanism of handeling child threads is needed (withh respect to ending the main thread) 
         startBogreSync (ds, is) frameFire updateWorld   -- this will block the main thread untill the window is closed
         
--- |Call this function at the end the game to stop the Boger system. This can be done through reactimate as follows
+-- |Call this function at the end the game to stop the Bogre system. This can be done through reactimate as follows
 --
 -- 
 -- >  reactimate $ (stopBogre bs) <$ someEvent@
@@ -162,7 +162,7 @@ stopBogre bs = do
         -- TODO clean stop
         closeDisplaySystem $ displaySystem bs
 
--- |starts the Boger system and blocks untill 'stopBogre' is called
+-- |starts the Bogre system and blocks untill 'stopBogre' is called
 startBogreSync :: BogreSystem -> (BogreFrame -> IO ()) -> (BogreFrame -> IO ()) -> IO ()
 startBogreSync (ds, is) frameFire updateWorld = do
         render win r () handler where
@@ -187,14 +187,14 @@ startBogre bs frameFire updateWorld = do
         return ()
 -}
 
--- |Will unhook a 'HookedBogerSystem' so that it is not tied to a Reactive-Banana context 't'
-unhookBogerSystem :: Frameworks t => HookedBogreSystem t -> BogreSystem
-unhookBogerSystem bs = (displaySystem bs, inputSystem bs)
+-- |Will unhook a 'HookedBogreSystem' so that it is not tied to a Reactive-Banana context 't'
+unhookBogreSystem :: Frameworks t => HookedBogreSystem t -> BogreSystem
+unhookBogreSystem bs = (displaySystem bs, inputSystem bs)
 
 -- | creates the basic events from the input system (can be done by hand, but using multiple input events causes Reactive-banana
 -- to run into memory leaks (e.g. using 2 different frameE to reactimate the same behaviour causes a mem leak))
-hookBogerSystem :: Frameworks t => BogreSystem -> AddHandler BogreFrame -> AddHandler BogreFrame -> Moment t (HookedBogreSystem t)
-hookBogerSystem (ds,is) frameAddHandler updateWorldAddHandler = do
+hookBogreSystem :: Frameworks t => BogreSystem -> AddHandler BogreFrame -> AddHandler BogreFrame -> Moment t (HookedBogreSystem t)
+hookBogreSystem (ds,is) frameAddHandler updateWorldAddHandler = do
         fE <- fromAddHandler frameAddHandler
         uwE <- fromAddHandler updateWorldAddHandler
         return HookedBogreSystem {
@@ -204,8 +204,8 @@ hookBogerSystem (ds,is) frameAddHandler updateWorldAddHandler = do
               _updateWorldE = uwE
         }
 
--- |Given a scene node this will get the position as returned by the OGRE engine. Not that this is, conseptually, the nodes position
--- Behaviour if set elsewhere, but there is no guarantee that the behaviors will be equal at all times:
+-- |Given a scene node, this will get the position as returned by the OGRE engine. Note that this is, conceptually, the nodes position Behavior if set 
+-- elsewhere, but there is no guarantee that the Behaviors will be equal at all times:
 --
 -- @
 -- setPosB bs node posB1
@@ -216,12 +216,12 @@ hookBogerSystem (ds,is) frameAddHandler updateWorldAddHandler = do
 getPositionB :: Frameworks t => SceneNode -> Moment t (Behavior t Vec3)
 getPositionB n = fromPoll $ getPosition n
 
--- |Get's the absolute position of the mouse. The position is not constrained to a window, so can grow indefinetly. The initial
+-- |Get's the absolute position of the mouse. The position is not constrained to a window, so can grow indefinitely. The initial mouse position is (0,0,0).
 -- mouse position is (0,0,0)
 getMousePosB :: Frameworks t => HookedBogreSystem t ->  Behavior t Vec3
 getMousePosB bs = velocityToPositionB bs (0,0,0) (getMouseVelB bs)
 
--- |Get's the velocity of the mouse. This is technically the average velocity of the mouse over the current frame
+-- |Get's the velocity of the mouse. This is technically the average velocity of the mouse over the current frame.
 getMouseVelB :: Frameworks t => HookedBogreSystem t ->  Behavior t Vec3
 getMouseVelB bs = stepper (0,0,0) (frameToVelocity <$> fE) where
         sensitivity = 0.5
@@ -244,7 +244,7 @@ getMouseVelB bs = stepper (0,0,0) (frameToVelocity <$> fE) where
 -- The value of the passed 'Event' is ignored.
 createNodeOnE :: Frameworks t => HookedBogreSystem t -> Event t String -> Moment t (Event t SceneNode)
 createNodeOnE bs createOnE = do
-        let ubs = unhookBogerSystem bs
+        let ubs = unhookBogreSystem bs
         let
                 createNode :: Frameworks s =>  String -> Moment s (SceneNode)
                 createNode mesh = do
@@ -300,9 +300,9 @@ setDynamicPosBs bs nodeVelB = do
                 
         reactimate $ doUpdates <$> sampleE
 
--- | take a behaviour and dynamically create delays. Only the currently needed history is stored, so
--- if a large delay is added, the resulting value will just be the latest recorded value untill history catches up. The passed
--- Event should specify the delays. The output is a behaviour of corresponding delayed Vec3 (latest added delay is at the head of the list)
+-- |Take a Behavior  and dynamically create delays. Only the currently needed history is stored, so if a large delay is added,
+-- the resulting value will just be the latest recorded value until history catches up. The passed Event should specify the delays.
+-- The output is a Behavior  of corresponding delayed Vec3 (latest added delay is at the head of the list).
 getDynamicDelayedPosBs :: Frameworks t =>  HookedBogreSystem t -> Behavior t Vec3 -> Event t  (Float, a) -> Moment t (Behavior t [(Vec3, a)])
 getDynamicDelayedPosBs bs masterB delayTaggedE = getWithInitDynamicDelayedPositionBs bs masterB [] delayTaggedE
 
@@ -392,8 +392,8 @@ getWithInitDynamicDelayedPositionBs bs masterB initDelaysTaggeed delayTaggedE = 
         return delayedB
 
 
--- |Converts a velocity to position 'Behavior'. Note that the velocity is simply sampled at the end of each frame, so if the velocity
--- changes many times in a frame, or was not valid for the duration of that frame, then the resulting posiiton may be inacurate.
+-- |Converts a velocity to position 'Behavior'. Note that the velocity is simply sampled at the end of each frame. If the velocity
+-- changes many times in a frame, or was not valid for the duration of that frame, then the resulting position may be inaccurate.
 velocityToPositionB :: Frameworks t => HookedBogreSystem t -> Vec3 -> Behavior t Vec3 -> Behavior t Vec3
 velocityToPositionB bs initPos vel = accumB initPos (add <$> dPosE) where
         dPosE = (((flip scale) <$> vel) <@> (frameDt <$> (frameE bs)))
@@ -412,14 +412,14 @@ getDelayedPosB bs velB delay = do
         return $ (fst . head) <$> dynVelBs where
 -}
         
--- |The current frame time (see 'framT'). Not that as this is a stepped 'Behavior', it only changes after the frame event occurs,
--- so if this is sampled on the frame event, it wall only be the previouse frame's time. 
+-- |The current frame time (see 'framT'). Note that, as this is a stepped 'Behavior', it only changes after the frame event occurs.
+-- So if this is sampled on the frame event, it wall only be the previouse frame's time. 
 getTimeB :: Frameworks t => HookedBogreSystem t -> Behavior t Float
 getTimeB bs = stepper 0 (frameT <$> (frameE bs))
 
 
--- |Get the KeyState changes (Up and Down) Event for a single key. Note that only the changes are visible, so the 
--- events will always alternate be Up and Down (i.e. there will not be 2 Down events or 2 Up events in sequence) 
+-- |Get the KeyState changes (Up and Down) Event for a single key. Note that only the changes are visible, so the events will always
+-- alternate between Up and Down (i.e. there will not be 2 Down events or 2 Up events in sequence).
 getKeyStateE :: Frameworks t => HookedBogreSystem t -> KeyCode -> Event t KeyState
 getKeyStateE bs key = removeDuplicates myKeyStatesE where
         allKeyPressE = keysPressE bs
@@ -447,13 +447,13 @@ addEntity bs meshFileName = fmap snd (OGRE.addEntity (displaySystem bs) meshFile
 -- r2B <- getRandomB
 -- @
 --
--- In this case @r1B@ and @r2B@ will be 2 seperatly generated randome values.
+-- In this case @r1B@ and @r2B@ will be 2 separately generated randome values.
 -- Note that values will be generated according to how 'a' is defined as an instance of the 'Random' class.
 getRandomB :: (Frameworks t, Random a) => Moment t (Behavior t a)
 getRandomB = fromPoll randomIO
 
 -- |Gets a 'Behavior' or random 'Vec3' values. This can be called multiple times to get multiple different random 'Behavior's.
--- The value of each dimention is generated independantly to be a value between 0 and 1.
+-- The value of each dimension is generated independently to be a value between 0 and 1.
 getRandomVec3B :: Frameworks t => Moment t (Behavior t Vec3)
 getRandomVec3B = do
         xB <- getRandomB
@@ -462,8 +462,8 @@ getRandomVec3B = do
         let xyzB = (\x y z -> (x,y,z)) <$> xB <*> yB <*> zB
         return xyzB
     
--- |Checks for collisions at each frame and fires an event when they colide. The 2 position behaviours must move appart before
--- a second event is fired (if the objects colide and stay colidded, only one event will be fired).   
+-- |Checks for collisions at each frame and fires an event when they collide. The 2 position Behavior s must move apart before
+-- a second event is fired (if the objects collide and stay within the collision radius, only one event will be fired).  
 sphereCollisionsE :: Frameworks t => HookedBogreSystem t -> Float -> SceneNode -> SceneNode  -> Moment t (Event t (SceneNode,SceneNode))
 sphereCollisionsE bs radius nodeA nodeB = do
         posAB <- getPositionB nodeA 

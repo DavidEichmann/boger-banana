@@ -10,6 +10,16 @@ Maintainer:		EichmannD at gmail dot com
 author:         David Eichmann
 copyright:      David Michael Taro Eichmann
 
+extra-source-files:
+                   src/Workarounds/makefile
+                   src/Workarounds/BB/Types.hs
+                   src/Workarounds/BB/Workarounds.hs
+                   src/Workarounds/cbits/Workarounds.cpp
+                   src/Workarounds/cbits/Workarounds.h
+                   src/Workarounds/cpp/Workarounds.h
+                   src/Workarounds/interface/Workarounds.gr
+                   src/Workarounds/interface/Workarounds.if
+                   
 library
   hs-source-dirs:  src
   build-depends:   
@@ -29,8 +39,11 @@ library
                    Reactive.Banana.BOGRE
                    Reactive.Banana.BOGRE.OIS
                    Reactive.Banana.BOGRE.OGRE
+  other-modules:
+                   BB.Types
+                   BB.Workarounds
 
-executable bogre-banana
+executable bogre-banana-snake
   hs-source-dirs:  src
   main-is:         Main.hs
   build-depends:   
@@ -41,4 +54,6 @@ executable bogre-banana
   ghc-options:     -Wall
   extensions: 	   ForeignFunctionInterface ImpredicativeTypes
   C-sources: 	   ./src/Workarounds/cbits/Workarounds.cpp
+  other-modules:
+                   BB.Examples.Snake
 
