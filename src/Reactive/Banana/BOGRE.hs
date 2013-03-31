@@ -155,7 +155,7 @@ runGame gameBuilder = do
 -- |Call this function at the end the game to stop the Bogre system. This can be done through reactimate as follows
 --
 -- 
--- >  reactimate $ (stopBogre bs) <$ someEvent@
+-- >  reactimate $ (stopBogre bs) <$ someEvent
 -- 
 stopBogre :: Frameworks t => HookedBogreSystem t -> IO ()
 stopBogre bs = do
