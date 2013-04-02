@@ -165,6 +165,7 @@ stopBogre bs = do
 -- |starts the Bogre system and blocks untill 'stopBogre' is called
 startBogreSync :: BogreSystem -> (BogreFrame -> IO ()) -> (BogreFrame -> IO ()) -> IO ()
 startBogreSync (ds, is) frameFire updateWorld = do
+        updateWorld nullFrame
         render win r () handler where
                 win = window ds
                 r = root ds
@@ -249,7 +250,7 @@ createNodeOnE bs createOnE = do
                 createNode :: Frameworks s =>  String -> Moment s (SceneNode)
                 createNode mesh = do
                         (_,node) <- liftIO $ OGRE.addEntity (fst ubs) mesh
-                        liftIO $ setPosition node (10000000,10000000,10000000)
+                        --liftIO $ setPosition node (10000000,10000000,10000000)
                         return node
         execute ((\mesh -> FrameworksMoment (createNode mesh))  <$> createOnE)
         
@@ -289,16 +290,15 @@ setDynamicVelBs bs nodeVelB = do
 -- |This will set positions of a variable number of nodes according to a 'Behavior' of a list of node-position pairs. Use this to
 -- set the position of dynamically created nodes. Note that this has a close relation to the output of 'getDynamicDelayedPosBs'
 setDynamicPosBs :: Frameworks t => HookedBogreSystem t -> Behavior t [(Vec3, SceneNode)]  -> Moment t ()
-setDynamicPosBs bs nodeVelB = do
-        let uwE = _updateWorldE bs
-        let sampleE = nodeVelB <@ uwE
+setDynamicPosBs bs nodePosB = do
+        let sampleE = nodePosB <@ (_updateWorldE bs) 
         let
                 -- move the nodes
                 doUpdates :: [(Vec3, SceneNode)] -> IO ()
                 doUpdates nodeDPoses = mapM_ doUpdate nodeDPoses where
                         doUpdate (pos, node) = setPosition node pos
                 
-        reactimate $ doUpdates <$> sampleE
+        reactimate $ doUpdates <$> sampleE 
 
 -- |Take a Behavior  and dynamically create delays. Only the currently needed history is stored, so if a large delay is added,
 -- the resulting value will just be the latest recorded value until history catches up. The passed Event should specify the delays.
@@ -377,6 +377,7 @@ getWithInitDynamicDelayedPositionBs bs masterB initDelaysTaggeed delayTaggedE = 
 
         -- frame event
         let fE = frameE bs
+        let uwE = _updateWorldE bs
         -- changes to the master behavior Event
         masterChangeE <- changes masterB
         -- dynamically add a delay Event
@@ -384,9 +385,10 @@ getWithInitDynamicDelayedPositionBs bs masterB initDelaysTaggeed delayTaggedE = 
         let initProps = foldl (flip addDelay) (nullFrame, initHist, 0, [], [], []) initDelaysTaggeed
         let stepsB = (accumB initProps (
                         (addDelay       <$>  delayTaggedE) `union`
+                        (stepFrame      <$   delayTaggedE) `union`
                         (updateFrame    <$>  fE) `union` 
                         (addToHistory   <$>  masterChangeE) `union` -- use previouse time as that is when the behaviour started (at the start of this frame)
-                        (stepFrame      <$   fE)
+                        (stepFrame      <$   uwE)
                 ))
         let delayedB = getDelayedVals <$> stepsB
         return delayedB
@@ -404,13 +406,6 @@ getDelayedPosB bs velB delay = do
         dynVelBs <- getWithInitDynamicDelayedPositionBs bs velB [(delay, ())] never
         return $ (fst . head) <$> dynVelBs where
 
-{-     NOT USED AS VELOCITIES ARE NOT PROPERLLY INTERPOLATED OVER FRAMES
--- |Time delay a velocity 'Behavior'
-getDelayedPosB :: Frameworks t =>  HookedBogreSystem t -> Behavior t Vec3 -> Float -> Moment t (Behavior t Vec3)
-getDelayedPosB bs velB delay = do
-        dynVelBs <- getWithInitDynamicDelayedPositionBs bs velB [(delay, ())] never
-        return $ (fst . head) <$> dynVelBs where
--}
         
 -- |The current frame time (see 'framT'). Note that, as this is a stepped 'Behavior', it only changes after the frame event occurs.
 -- So if this is sampled on the frame event, it wall only be the previouse frame's time. 
@@ -463,7 +458,19 @@ getRandomVec3B = do
         return xyzB
     
 -- |Checks for collisions at each frame and fires an event when they collide. The 2 position Behavior s must move apart before
--- a second event is fired (if the objects collide and stay within the collision radius, only one event will be fired).  
+-- a second event is fired (if the objects collide and stay within the collision radius, only one event will be fired).
+sphereCollisionsE :: Frameworks t => HookedBogreSystem t -> Float -> SceneNode -> SceneNode  -> Moment t (Event t (SceneNode,SceneNode))
+sphereCollisionsE bs radius nodeA nodeB = do
+        posAB <- getPositionB nodeA 
+        posBB <- getPositionB nodeB
+        let
+                collisionE = (nodeA, nodeB) <$ (filterE (==(False,True)) prevZip)
+                prevZip = accumE (True,True) ((\curr (_,prev) -> (prev,curr)) <$> isCollidedFrameE)
+                isCollidedFrameE = ((<= sqrRadius) <$> (sqrDistB)) <@ (frameE bs)
+                sqrDistB = sqrDist <$> posAB <*> posBB
+                sqrRadius = radius**2
+        return collisionE
+{-      
 sphereCollisionsE :: Frameworks t => HookedBogreSystem t -> Float -> SceneNode -> SceneNode  -> Moment t (Event t (SceneNode,SceneNode))
 sphereCollisionsE bs radius nodeA nodeB = do
         posAB <- getPositionB nodeA 
@@ -478,6 +485,7 @@ sphereCollisionsE bs radius nodeA nodeB = do
                 sqrDistB = sqrDist <$> posAB <*> posBB
                 sqrRadius = radius**2
         return collisionE
+-}
 
 -- |Filters an 'Event' such that the save event only occurse once. i.e. events [1,1,1,2,2,2,1,1,1,4,5,5,4,5,6] would become [1,2,1,4,5,4,5,6]
 removeDuplicates :: (Frameworks t, Eq a) => Event t a -> Event t a
