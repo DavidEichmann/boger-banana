@@ -22,7 +22,7 @@ hogreHois05 :: IO ()
 hogreHois05 = runGame myGame
 
 -- init the world and return an ogre head node
-initWorld :: Frameworks t => HookedBogreSystem t -> SceneManager -> IO (SceneNode)
+initWorld :: Frameworks t => HookedBogreSystem t -> SceneManager -> IO (SceneNode,SceneNode)
 initWorld bs smgr = do
         -- create a light
         l <- sceneManager_createLight_SceneManagerPcharP smgr "MainLight"
@@ -33,22 +33,34 @@ initWorld bs smgr = do
         camera_setPosition_CameraPfloatfloatfloat cam 0 0 1000
         
         -- create ogre head
-        ogre <- liftIO $ addEntity bs "ogrehead.mesh"
+        ogre1 <- addEntity bs "ogrehead.mesh"
+        ogre2 <- addEntity bs "ogrehead.mesh"
         
-        return (ogre)
+        return (ogre1,ogre2)
 
 
 myGame :: Frameworks t => GameBuilder t
 myGame bs smgr = do
-        -- initialize the world (and ogre)
-        ogreaHead <- liftIO $ initWorld bs smgr
+        -- initialize the world (and ogre node)
+        (ogre1, ogre2) <- liftIO $ initWorld bs smgr
  
-        -- get the mouse position Behavior :: Behavior t Vec3
-        let posB = getMousePosB bs
+        -- get the mouse position Behavior posB :: Behavior t Vec3
+        let mousePosB = getMousePosB bs
  
-        -- set ogre head position to mouse position Behavior
-        setPosB bs ogreaHead posB
-
+        -- set ogre1 position to mouse position Behavior
+        setPosB bs ogre1 mousePosB
+        
+        -- create a circling behavior
+        let timeB = getTimeB bs
+        let relativeCirclePosB = ((\time -> scale 50 (sin time, cos time, 0)) . (*50)) <$> timeB
+        let circlePosB = add <$> mousePosB <*> relativeCirclePosB
+        
+        -- set ogre2 to circlePosB: circle around the mouse position
+        setPosB bs ogre2 circlePosB
+        
+        -- stop on escape key
+        let escE = getKeyDownE bs KC_ESCAPE
+        reactimate $ (stopBogre bs) <$ escE
         
         
         

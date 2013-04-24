@@ -162,6 +162,8 @@ create3DWindow hwnd = do
 
 
 
+instance Eq SceneNode where
+        (SceneNode a) == (SceneNode b) = a == b  
 
 
 

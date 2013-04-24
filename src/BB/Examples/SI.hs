@@ -24,7 +24,7 @@ playerInitPos = (0,-300,0)
 --alienCols :: Int
 alienCols = 10
 --alienRows :: Int
-alienRows = 30
+alienRows = 3
 
 alienSpacing = 60
 alienDropSpeed = 10      -- seconds before aliens drop
@@ -45,16 +45,27 @@ initWorld bs smgr = do
         camera_setPosition_CameraPfloatfloatfloat cam 0 0 1000
         
         -- create first head and target
-        head0 <- liftIO $ addEntity bs "ogrehead.mesh"
-        target <- liftIO $ addEntity bs "ogrehead.mesh"
-        aliens <- liftIO $ mapM sequence (replicate (floor alienRows) (replicate (floor alienCols) (addEntity bs "ogrehead.mesh")))
-        return (head0, target, aliens)
+        shot <- addEntity bs "knot.mesh"
+        node_scale (toNode shot) 0.1 0.2 0.1
+         
+        ship <- addEntity bs "ogrehead.mesh"
+        
+        let createOgreHeadIO = do
+                node <- addEntity bs "robot.mesh"
+                node_scale (toNode node) 0.7 0.7 0.7
+                radian_with_float (3.1415/2) (\yaw -> node_yaw (toNode node) yaw TS_LOCAL)
+                radian_with_float (3.1415) (\roll -> node_roll (toNode node) roll TS_LOCAL) 
+                return node
+                
+        aliens <- mapM sequence (replicate (floor alienRows) (replicate (floor alienCols) createOgreHeadIO))
+        
+        return (ship, shot, aliens)
 
 
 myGame :: Frameworks t => GameBuilder t
 myGame bs smgr = do
         -- init the world
-        (ship, shot, aliens)<- liftIO $ initWorld bs smgr
+        (ship, shot, aliens) <- liftIO $ initWorld bs smgr
         
         let
                 tB = getTimeB bs
@@ -73,15 +84,28 @@ myGame bs smgr = do
                 
         setPosB bs ship playerPosB
         
+        -- colisions
+        let aliensFlat = concat aliens
+        alienHitEs <- (mapM (sphereCollisionsE bs 25 shot) (aliensFlat))
+        let
+                -- an event containing the alien node that was hit by the shot node
+                alienHitE = snd <$> (unions alienHitEs)
+                deadAliensB = accumB [] ((:) <$> alienHitE)
+                
+        
         -- player shot
         let
                 shootE = getKeyDownE bs KC_SPACE
+                shotInMotionB = stepper False (
+                                (True  <$ shootE) `union`
+                                (False <$ alienHitE)
+                        )
                 shotTimeB = stepper 0 (tB <@ shootE)
                 shotStartPosB = stepper playerInitPos (playerPosB <@ shootE)
                 
-                shotPosB = shotPos <$> playerPosB <*> shotTimeB <*> shotStartPosB <*> tB
-                shotPos playerPos shotTime shotStartPos time
-                        | shotTime == 0         = playerPos
+                shotPosB = shotPos <$> shotInMotionB <*> playerPosB <*> shotTimeB <*> shotStartPosB <*> tB
+                shotPos shotInMotion playerPos shotTime shotStartPos time
+                        | not shotInMotion      = playerPos
                         | otherwise             = shotStartPos `add` (scale (shotSpeed*(time - shotTime)) (0,1,0))
                 
         setPosB bs shot shotPosB
@@ -103,39 +127,15 @@ myGame bs smgr = do
                 aliensPosB = toAlienPoses <$> alienFrontCenterB where
                         toAlienPoses frontCenter = map (map (add frontCenter)) alienRelativePoses
                 posNodeZipB = ((`zip` (concat aliens)) . concat) <$> aliensPosB
+                posNodeZipNoDeadB = moveDead <$> deadAliensB <*> posNodeZipB where
+                        moveDead dead posNodes = map (\(p,n) -> if n `elem` dead then ((-1000,0,0),n) else (p,n)) posNodes 
         
-        setDynamicPosBs bs posNodeZipB
+        setDynamicPosBs bs posNodeZipNoDeadB
         
         -- stop on escape key
         let escE = getKeyDownE bs KC_ESCAPE
         reactimate $ (stopBogre bs) <$ escE
         
         return ()
-        
-        
-        
-        {-
-        -- random bounded positions for target
-        randomVec3 <- getRandomVec3B
-        let randomTargetPosB = ((sub (boxWidthH,boxWidthH,boxWidthH)) . (scale boxWidth)) <$> randomVec3 where
-                boxWidthH = 150
-                boxWidth = 2*boxWidthH
-                
-        
-        -- target position changes on collision
-        initTargetPos <- initial randomTargetPosB
-        targetHitE <- sphereCollisionsE bs 40 head0 target
-        let targetPosB = stepper initTargetPos (randomTargetPosB <@ targetHitE) where
-        setPosB bs target targetPosB
-        
-        -- dynamically add heads
-        newHeadE <- createNodeOnE bs ("ogrehead.mesh" <$ targetHitE)
-        -- delay heads
-        let headCountB = accumB 1 ((+1) <$ newHeadE)
-        let headsDelaysE = (((,) . (*0.2))  <$> headCountB) <@> newHeadE
-        delayedB <- getDynamicDelayedPosBs bs head0PosB headsDelaysE
-        setDynamicPosBs bs delayedB
-        
-        -}
-        
+
         

@@ -8,8 +8,9 @@ import BB.Examples.HogreHois02
 import BB.Examples.HogreHois03
 import BB.Examples.HogreHois04
 -}
---import BB.Examples.HogreHois05
+import BB.Examples.HogreHois05
 import BB.Examples.Snake
+import BB.Examples.SI
 
 --import BB.Workarounds
 
@@ -17,6 +18,7 @@ import BB.Examples.Snake
 main::IO()
 main = do
         --hogreHois05
-        snake
+        --snake
+        spaceInvaders
         
         
